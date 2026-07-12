@@ -3,9 +3,11 @@ import { ExecutionResult } from '../types/execution';
 const WORKER_TIMEOUT_MS = 4000;
 
 let worker: Worker | null = null;
-let currentResolve: ((res: any) => void) | null = null;
-let currentReject: ((err: any) => void) | null = null;
-let timeoutId: any = null;
+let initResolve: (() => void) | null = null;
+let initReject: ((err: Error) => void) | null = null;
+let executeResolve: ((res: string) => void) | null = null;
+let executeReject: ((err: Error) => void) | null = null;
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const terminateWorker = () => {
   if (worker) {
@@ -27,19 +29,41 @@ const ensureWorker = (): Worker => {
       }
       
       const { type, result, error } = e.data;
-      if (type === 'init-success' || type === 'execute-success') {
-        if (currentResolve) currentResolve(result);
-      } else if (type === 'init-error' || type === 'execute-error') {
-        if (currentReject) currentReject(new Error(error));
+      if (type === 'init-success') {
+        if (initResolve) initResolve();
+        initResolve = null;
+        initReject = null;
+      } else if (type === 'execute-success') {
+        if (executeResolve) executeResolve(result);
+        executeResolve = null;
+        executeReject = null;
+      } else if (type === 'init-error') {
+        if (initReject) initReject(new Error(error));
+        initResolve = null;
+        initReject = null;
+      } else if (type === 'execute-error') {
+        if (executeReject) executeReject(new Error(error));
+        executeResolve = null;
+        executeReject = null;
       }
-      
-      currentResolve = null;
-      currentReject = null;
     };
     
     worker.onerror = (err) => {
-      if (timeoutId) clearTimeout(timeoutId);
-      if (currentReject) currentReject(err);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      const errorMsg = err instanceof ErrorEvent ? err.message : 'Worker error';
+      if (initReject) {
+        initReject(new Error(errorMsg));
+      }
+      if (executeReject) {
+        executeReject(new Error(errorMsg));
+      }
+      initResolve = null;
+      initReject = null;
+      executeResolve = null;
+      executeReject = null;
       terminateWorker();
     };
   }
@@ -47,26 +71,26 @@ const ensureWorker = (): Worker => {
 };
 
 export const initExecutionEngine = async (): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const w = ensureWorker();
-    currentResolve = resolve;
-    currentReject = reject;
+    initResolve = resolve;
+    initReject = reject;
     w.postMessage({ id: Date.now(), action: 'init' });
   });
 };
 
 export const executeCode = async (code: string): Promise<ExecutionResult> => {
-  return new Promise((resolve, reject) => {
+  return new Promise<ExecutionResult>((resolve, reject) => {
     const w = ensureWorker();
-    currentResolve = (jsonStr: string) => {
+    executeResolve = (jsonStr: string) => {
       try {
         const res = JSON.parse(jsonStr) as ExecutionResult;
         resolve(res);
       } catch (e) {
-        reject(e);
+        reject(e instanceof Error ? e : new Error(String(e)));
       }
     };
-    currentReject = reject;
+    executeReject = reject;
     
     w.postMessage({ id: Date.now(), action: 'execute', code });
     
@@ -84,6 +108,8 @@ export const executeCode = async (code: string): Promise<ExecutionResult> => {
         truncated: true,
         truncationReason: 'Timeout'
       });
+      executeResolve = null;
+      executeReject = null;
     }, WORKER_TIMEOUT_MS);
   });
 };

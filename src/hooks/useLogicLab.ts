@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { AppPhase, ExecutionResult, TraceStep } from '../types/execution';
+import { AppPhase, ExecutionResult } from '../types/execution';
 import { initExecutionEngine, executeCode } from '../lib/execute';
 import { EXAMPLES } from '../lib/examples';
 
@@ -12,7 +12,7 @@ export function useLogicLab() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // Preload engine on mount
@@ -39,11 +39,12 @@ export function useLogicLab() {
       } else {
         setPhase('visualizing');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown execution error';
       setResult({
         steps: [],
         stdout: '',
-        error: { name: 'InternalError', message: err.message || 'Unknown execution error', line: 1 },
+        error: { name: 'InternalError', message: errMsg, line: 1 },
         durationMs: 0,
         truncated: false
       });

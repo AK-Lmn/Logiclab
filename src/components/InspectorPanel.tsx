@@ -1,8 +1,10 @@
 import React from 'react';
 import { Terminal, ListTree, Layers, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
+import { useLogicLab } from '../hooks/useLogicLab';
+import { SerializedValue } from '../types/execution';
 
 interface InspectorPanelProps {
-  lab: any;
+  lab: ReturnType<typeof useLogicLab>;
 }
 
 export function InspectorPanel({ lab }: InspectorPanelProps) {
@@ -10,25 +12,25 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
   const isError = lab.phase === 'error';
   const error = lab.result?.error;
 
-  const renderValue = (val: any): React.ReactNode => {
+  const renderValue = (val: SerializedValue): React.ReactNode => {
     if (!val) return <span className="text-slate-500">undefined</span>;
     switch (val.type) {
       case 'null': return <span className="text-slate-500 italic">None</span>;
       case 'bool': return <span className="text-violet-400 font-mono">{val.value ? 'True' : 'False'}</span>;
       case 'int':
       case 'float': return <span className="text-amber-400 font-mono">{val.value}</span>;
-      case 'str': return <span className="text-green-400 font-mono">"{val.value}"</span>;
-      case 'list': return <span className="text-slate-300 font-mono">[{val.value.map((v: any, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)}]</span>;
-      case 'tuple': return <span className="text-slate-300 font-mono">({val.value.map((v: any, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)})</span>;
-      case 'set': return <span className="text-slate-300 font-mono">{"{"}{val.value.map((v: any, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)}{"}"}</span>;
+      case 'str': return <span className="text-green-400 font-mono">&quot;{val.value}&quot;</span>;
+      case 'list': return <span className="text-slate-300 font-mono">[{val.value.map((v: SerializedValue, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)}]</span>;
+      case 'tuple': return <span className="text-slate-300 font-mono">({val.value.map((v: SerializedValue, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)})</span>;
+      case 'set': return <span className="text-slate-300 font-mono">{"{"}{val.value.map((v: SerializedValue, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)}{"}"}</span>;
       case 'dict': 
         return (
           <span className="text-slate-300 font-mono">
             {"{"}
-            {Object.entries(val.value).map(([k, v]: [string, any], i) => (
+            {Object.entries(val.value).map(([k, v]: [string, SerializedValue], i) => (
               <React.Fragment key={k}>
                 {i > 0 && ', '}
-                <span className="text-green-400">"{k}"</span>: {renderValue(v)}
+                <span className="text-green-400">&quot;{k}&quot;</span>: {renderValue(v)}
               </React.Fragment>
             ))}
             {"}"}
@@ -96,7 +98,7 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
               ) : (
                 <table className="w-full text-sm">
                   <tbody>
-                    {Object.entries(step.locals).map(([name, val]: [string, any]) => {
+                    {Object.entries(step.locals).map(([name, val]: [string, SerializedValue]) => {
                       // Check if changed
                       const prevStep = lab.currentStepIndex > 0 ? lab.result?.steps[lab.currentStepIndex - 1] : null;
                       const isChanged = prevStep && JSON.stringify(prevStep.locals[name]) !== JSON.stringify(val);

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Play, Pause, SkipBack, SkipForward, FastForward, Rewind, Edit2 } from 'lucide-react';
+import { useLogicLab } from '../hooks/useLogicLab';
 
 interface PlaybackControlsProps {
-  lab: any; // Using any for MVP brevity, but refers to ReturnType<typeof useLogicLab>
+  lab: ReturnType<typeof useLogicLab>;
 }
 
 export function PlaybackControls({ lab }: PlaybackControlsProps) {

@@ -1,33 +1,52 @@
 import { PYTHON_WRAPPER_CODE } from './python-wrapper';
 
-declare const self: any;
+interface PyodideInstance {
+  runPythonAsync: (code: string) => Promise<string>;
+  globals: {
+    set: (name: string, value: string) => void;
+  };
+}
 
-let pyodide: any = null;
+interface WorkerGlobal {
+  importScripts: (...urls: string[]) => void;
+  loadPyodide: () => Promise<PyodideInstance>;
+  postMessage: (message: unknown) => void;
+  addEventListener: (
+    type: string,
+    listener: (event: MessageEvent<{ id: number; code: string; action: string }>) => void
+  ) => void;
+}
 
-// Pyodide loads via script injection typically, but in a worker we can use importScripts
-// if we point to a CDN. We'll use the official Pyodide CDN.
-const loadPyodideFromCDN = async () => {
+const workerGlobal = (typeof self !== 'undefined' ? self : {}) as unknown as WorkerGlobal;
+
+let pyodide: PyodideInstance | null = null;
+
+const loadPyodideFromCDN = async (): Promise<PyodideInstance> => {
   if (pyodide) return pyodide;
   
-  self.importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
+  workerGlobal.importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
   
-  // @ts-expect-error global function loaded from script
+  // @ts-expect-error loadPyodide is loaded dynamically from importScripts
   pyodide = await loadPyodide();
   
-  // Load our wrapper function
+  if (!pyodide) {
+    throw new Error('Failed to initialize Pyodide instance.');
+  }
+  
   await pyodide.runPythonAsync(PYTHON_WRAPPER_CODE);
   return pyodide;
 };
 
-self.addEventListener('message', async (e: any) => {
+workerGlobal.addEventListener('message', async (e) => {
   const { id, code, action } = e.data;
   
   if (action === 'init') {
     try {
       await loadPyodideFromCDN();
-      self.postMessage({ id, type: 'init-success' });
-    } catch (err: any) {
-      self.postMessage({ id, type: 'init-error', error: err.message });
+      workerGlobal.postMessage({ id, type: 'init-success' });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      workerGlobal.postMessage({ id, type: 'init-error', error: message });
     }
     return;
   }
@@ -36,13 +55,13 @@ self.addEventListener('message', async (e: any) => {
     try {
       const p = await loadPyodideFromCDN();
       
-      // We pass the code by escaping it safely or by setting a global variable
       p.globals.set('_user_code', code);
       const jsonResult = await p.runPythonAsync('run_logiclab(_user_code)');
       
-      self.postMessage({ id, type: 'execute-success', result: jsonResult });
-    } catch (err: any) {
-      self.postMessage({ id, type: 'execute-error', error: err.message });
+      workerGlobal.postMessage({ id, type: 'execute-success', result: jsonResult });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      workerGlobal.postMessage({ id, type: 'execute-error', error: message });
     }
   }
 });

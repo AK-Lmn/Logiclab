@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { EditorView, lineNumbers } from '@codemirror/view';
-import { StateField, StateEffect, RangeSet } from '@codemirror/state';
+import { Extension } from '@codemirror/state';
 
 interface EditorPanelProps {
   code: string;
@@ -12,64 +12,51 @@ interface EditorPanelProps {
   errorLine?: number;
 }
 
+// Move static custom theme outside the component to avoid unnecessary recreations
+const customTheme = EditorView.theme({
+  "&": {
+    backgroundColor: "var(--color-charcoal-900)",
+    color: "#e2e8f0",
+    height: "100%",
+    fontSize: "14px",
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  },
+  ".cm-content": {
+    paddingTop: "16px",
+    paddingBottom: "16px",
+  },
+  ".cm-gutters": {
+    backgroundColor: "var(--color-charcoal-800)",
+    color: "#64748b",
+    border: "none",
+  },
+  ".cm-activeLine": {
+    backgroundColor: "rgba(139, 92, 246, 0.1)", // violet-500/10
+  },
+  ".cm-activeLineGutter": {
+    backgroundColor: "rgba(139, 92, 246, 0.2)", // violet-500/20
+    color: "#c4b5fd", // violet-300
+  },
+  ".cm-execution-line": {
+    backgroundColor: "rgba(245, 158, 11, 0.2) !important", // amber-500/20
+  },
+  ".cm-error-line": {
+    backgroundColor: "rgba(239, 68, 68, 0.2) !important", // red-500/20
+  }
+}, { dark: true });
+
 export function EditorPanel({ code, setCode, readOnly, currentLine, errorLine }: EditorPanelProps) {
   
-  // Custom theme for code mirror
-  const customTheme = EditorView.theme({
-    "&": {
-      backgroundColor: "var(--color-charcoal-900)",
-      color: "#e2e8f0",
-      height: "100%",
-      fontSize: "14px",
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-    },
-    ".cm-content": {
-      paddingTop: "16px",
-      paddingBottom: "16px",
-    },
-    ".cm-gutters": {
-      backgroundColor: "var(--color-charcoal-800)",
-      color: "#64748b",
-      border: "none",
-    },
-    ".cm-activeLine": {
-      backgroundColor: "rgba(139, 92, 246, 0.1)", // violet-500/10
-    },
-    ".cm-activeLineGutter": {
-      backgroundColor: "rgba(139, 92, 246, 0.2)", // violet-500/20
-      color: "#c4b5fd", // violet-300
-    },
-    ".cm-execution-line": {
-      backgroundColor: "rgba(245, 158, 11, 0.2) !important", // amber-500/20
-    },
-    ".cm-error-line": {
-      backgroundColor: "rgba(239, 68, 68, 0.2) !important", // red-500/20
-    }
-  }, { dark: true });
-
   const extensions = useMemo(() => {
-    const exts: any[] = [python(), customTheme, lineNumbers()];
+    const exts: Extension[] = [python(), customTheme, lineNumbers()];
     
-    // Add active line highlighting
     if (readOnly) {
-      const lineHighlighter = StateField.define({
-        create() { return RangeSet.empty },
-        update(value, tr) {
-          return value.map(tr.changes);
-        },
-        provide: f => EditorView.decorations.from(f)
-      });
-      
       const themeExt = EditorView.baseTheme({
         ".cm-execution-line": { backgroundColor: "rgba(245, 158, 11, 0.2)" },
         ".cm-error-line": { backgroundColor: "rgba(239, 68, 68, 0.2)" }
       });
       
       exts.push(themeExt);
-      exts.push(EditorView.updateListener.of((update) => {
-        // We'll handle decoration via DOM manipulation or a specific facet if necessary,
-        // but it's simpler to just use a custom attribute on the lines via EditorView.decorations
-      }));
     }
     
     return exts;
@@ -99,10 +86,6 @@ export function EditorPanel({ code, setCode, readOnly, currentLine, errorLine }:
           autocompletion: false, // user requested no autocomplete
         }}
         className="h-full"
-        // Adding inline styles to forcefully highlight current line if simple CM plugins are too complex for MVP
-        onCreateEditor={(view) => {
-          // If we want to manipulate DOM lines, we could, but let's try purely through react-codemirror
-        }}
       />
       {/* Hack for MVP to highlight lines since CM6 state fields can be tricky without proper setup */}
       <style>{`

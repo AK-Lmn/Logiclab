@@ -5,7 +5,7 @@ import { useLogicLab } from '../hooks/useLogicLab';
 import { EditorPanel } from './EditorPanel';
 import { InspectorPanel } from './InspectorPanel';
 import { PlaybackControls } from './PlaybackControls';
-import { Terminal, Activity, Play, FileCode2 } from 'lucide-react';
+import { Activity, Play } from 'lucide-react';
 import { EXAMPLES } from '../lib/examples';
 
 export function LogicLabApp() {

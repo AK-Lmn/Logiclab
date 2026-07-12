@@ -188,7 +188,7 @@ export const PYTHON_WRAPPER_CODE = [
   "    ",
   "    try:",
   "        sys.settrace(trace_calls)",
-  "        exec(compiled_code, exec_globals, exec_locals)",
+  "        exec(compiled_code, exec_globals, exec_globals)",
   "    except Exception as e:",
   "        if truncation_reason and str(e) == truncation_reason:",
   "            pass",
@@ -225,4 +225,4 @@ export const PYTHON_WRAPPER_CODE = [
   "        'truncationReason': truncation_reason",
   "    })",
   ""
-].join("\\n");
+].join("\n");
