@@ -5,7 +5,8 @@ import { useLogicLab } from '../hooks/useLogicLab';
 import { EditorPanel } from './EditorPanel';
 import { InspectorPanel } from './InspectorPanel';
 import { PlaybackControls } from './PlaybackControls';
-import { Activity, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
+import { LogicLabMark } from './LogicLabMark';
 import { EXAMPLES } from '../lib/examples';
 
 export function LogicLabApp() {
@@ -17,7 +18,7 @@ export function LogicLabApp() {
       <header className="border-b border-charcoal-700 bg-ink-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
-            <Activity className="w-5 h-5 text-violet-400" />
+            <LogicLabMark size={20} />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-baseline gap-2">
