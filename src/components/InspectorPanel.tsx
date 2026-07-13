@@ -140,7 +140,7 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
         )}
 
         {/* Locals & Call Stack Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0 max-w-full">
           
           {/* Variables */}
           <div className="bg-charcoal-800 border border-charcoal-700 rounded-lg overflow-hidden flex flex-col min-h-[200px]">
@@ -161,7 +161,7 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
                       
                       return (
                         <tr key={name} className={"border-b border-charcoal-700/50 last:border-0 " + (isChanged ? 'bg-violet-500/10' : '')}>
-                          <td className="py-1.5 pr-4 align-top font-mono text-slate-300">{name}</td>
+                          <td className="py-1.5 pr-4 align-top font-mono text-slate-300 break-words min-w-[80px]">{name}</td>
                           <td className="py-1.5 break-all">{renderValue(val)}</td>
                         </tr>
                       );
@@ -186,7 +186,7 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
                 return [...stack].reverse().map((frame, idx) => {
                   const originalIdx = stack.length - 1 - idx;
                   const isCurrent = originalIdx === stack.length - 1;
-                  const cardClass = "px-3 py-1.5 rounded text-sm font-mono border break-all transition-colors flex items-center justify-between gap-2 " + 
+                  const cardClass = "px-3 py-1.5 rounded text-sm font-mono border break-words transition-colors flex items-center justify-between gap-2 min-w-0 w-full max-w-full " + 
                     (isCurrent 
                       ? 'bg-violet-500/20 border-violet-500/50 text-violet-200 font-semibold shadow-sm shadow-violet-900/10' 
                       : 'bg-charcoal-900 border-charcoal-700 text-slate-400');
@@ -197,7 +197,7 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
                       className={cardClass}
                       style={{ paddingLeft: `${Math.min(originalIdx, 6) * 6 + 12}px` }}
                     >
-                      <span className="break-all">{getFrameLabel(frame)}</span>
+                      <span className="break-words min-w-0">{getFrameLabel(frame)}</span>
                       {isCurrent && (
                         <span className="text-[10px] bg-violet-500/30 text-violet-300 px-1.5 py-0.5 rounded font-sans uppercase tracking-wider font-bold shrink-0">
                           Current
@@ -218,7 +218,7 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
             <Terminal className="w-4 h-4 text-slate-400" />
             <h3 className="text-xs font-semibold tracking-wider text-slate-300 uppercase">Output</h3>
           </div>
-          <div className="p-3 font-mono text-sm text-slate-300 overflow-auto flex-1 whitespace-pre-wrap">
+          <div className="p-3 font-mono text-sm text-slate-300 overflow-auto flex-1 whitespace-pre-wrap break-words">
             {currentStdout || <span className="text-slate-600 italic">No output yet...</span>}
           </div>
         </div>

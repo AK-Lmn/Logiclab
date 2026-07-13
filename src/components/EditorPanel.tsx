@@ -18,8 +18,14 @@ const customTheme = EditorView.theme({
     backgroundColor: "var(--color-charcoal-900)",
     color: "#e2e8f0",
     height: "100%",
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: "0",
     fontSize: "14px",
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  },
+  ".cm-scroller": {
+    overflowX: "auto",
   },
   ".cm-content": {
     paddingTop: "16px",
@@ -63,7 +69,10 @@ export function EditorPanel({ code, setCode, readOnly, currentLine, errorLine }:
   }, [readOnly]);
 
   return (
-    <div className="h-full w-full absolute inset-0 overflow-auto">
+    <div 
+      className="h-full w-full absolute inset-0 overflow-auto max-w-full min-w-0"
+      style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}
+    >
       <CodeMirror
         value={code}
         height="100%"
@@ -85,7 +94,7 @@ export function EditorPanel({ code, setCode, readOnly, currentLine, errorLine }:
           closeBrackets: true,
           autocompletion: false, // user requested no autocomplete
         }}
-        className="h-full"
+        className="h-full w-full max-w-full min-w-0"
       />
       {/* Hack for MVP to highlight lines since CM6 state fields can be tricky without proper setup */}
       <style>{`
