@@ -103,4 +103,41 @@ describe('useLogicLab Hook', () => {
     });
     expect(result.current.currentStepIndex).toBe(0);
   });
+
+  it('resets execution step index and playback state on calling reset', async () => {
+    const mockResult = {
+      steps: [
+        { id: 1, event: 'line' as const, line: 1, functionName: '', callDepth: 0, locals: {}, stdout: '', stdoutDelta: '' },
+        { id: 2, event: 'line' as const, line: 2, functionName: '', callDepth: 0, locals: {}, stdout: '', stdoutDelta: '' }
+      ],
+      stdout: '',
+      durationMs: 10,
+      truncated: false
+    };
+    
+    vi.spyOn(executeModule, 'executeCode').mockResolvedValueOnce(mockResult);
+
+    const { result } = renderHook(() => useLogicLab());
+    
+    await act(async () => {
+      await result.current.handleRun();
+    });
+
+    act(() => {
+      result.current.nextStep();
+    });
+    expect(result.current.currentStepIndex).toBe(1);
+
+    // Play
+    act(() => {
+      result.current.togglePlay();
+    });
+    expect(result.current.isPlaying).toBe(true);
+
+    act(() => {
+      result.current.reset();
+    });
+    expect(result.current.currentStepIndex).toBe(0);
+    expect(result.current.isPlaying).toBe(false);
+  });
 });

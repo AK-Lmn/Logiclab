@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'child_process';
 import { PYTHON_WRAPPER_CODE } from '../lib/python-wrapper';
-import { ExecutionResult } from '../types/execution';
+import { ExecutionResult, SerializedValue } from '../types/execution';
 import { EXAMPLES } from '../lib/examples';
 
 function runPythonWrapper(userCode: string): ExecutionResult {
@@ -17,7 +17,7 @@ print(run_logiclab(${JSON.stringify(userCode)}))
     });
     return JSON.parse(stdout.trim()) as ExecutionResult;
   } catch (err: unknown) {
-    const stderr = err instanceof Error && 'stderr' in err ? String((err as any).stderr) : '';
+    const stderr = err instanceof Error && 'stderr' in err ? String((err as Record<string, unknown>).stderr) : '';
     throw new Error(`Python execution failed: ${stderr || (err instanceof Error ? err.message : String(err))}`);
   }
 }
@@ -184,6 +184,51 @@ res = fact(3)
       expect(callSteps[0].callDepth).toBe(2);
       expect(callSteps[1].callDepth).toBe(3);
       expect(callSteps[2].callDepth).toBe(4);
+
+      // Verify stack snapshots for the call steps
+      // For fact(3)
+      const stack0 = callSteps[0].stack;
+      expect(stack0).toBeDefined();
+      expect(stack0?.length).toBe(2); // <module>, fact
+      expect(stack0?.[0].functionName).toBe('<module>');
+      expect(stack0?.[1].functionName).toBe('fact');
+      expect(stack0?.[1].locals.n).toEqual({ type: 'int', value: 3 });
+
+      // For fact(2)
+      const stack1 = callSteps[1].stack;
+      expect(stack1?.length).toBe(3); // <module>, fact, fact
+      expect(stack1?.[1].locals.n).toEqual({ type: 'int', value: 3 });
+      expect(stack1?.[2].locals.n).toEqual({ type: 'int', value: 2 });
+
+      // For fact(1)
+      const stack2 = callSteps[2].stack;
+      expect(stack2?.length).toBe(4); // <module>, fact, fact, fact
+      expect(stack2?.[1].locals.n).toEqual({ type: 'int', value: 3 });
+      expect(stack2?.[2].locals.n).toEqual({ type: 'int', value: 2 });
+      expect(stack2?.[3].locals.n).toEqual({ type: 'int', value: 1 });
+    });
+
+    it('traces nested function calls and captures stack frame snapshots', () => {
+      const code = `
+def outer_func(x):
+    def inner_func(y):
+        return x + y
+    return inner_func(10)
+res = outer_func(5)
+`;
+      const res = runPythonWrapper(code);
+      expect(res.error).toBeNull();
+      
+      // Find the step executing inside inner_func
+      const innerStep = res.steps.find(s => s.functionName === 'inner_func' && s.event === 'line');
+      expect(innerStep).toBeDefined();
+      expect(innerStep?.stack).toBeDefined();
+      expect(innerStep?.stack?.length).toBe(3); // <module>, outer_func, inner_func
+      expect(innerStep?.stack?.[0].functionName).toBe('<module>');
+      expect(innerStep?.stack?.[1].functionName).toBe('outer_func');
+      expect(innerStep?.stack?.[2].functionName).toBe('inner_func');
+      expect(innerStep?.stack?.[1].locals.x).toEqual({ type: 'int', value: 5 });
+      expect(innerStep?.stack?.[2].locals.y).toEqual({ type: 'int', value: 10 });
     });
 
     it('handles print statements and standard output', () => {
@@ -267,10 +312,10 @@ deep = [[[[42]]]]
       // level 3: [ 42 ]
       // level 4: truncated
       expect(locals.deep.type).toBe('list');
-      const lvl1 = locals.deep.value[0];
-      const lvl2 = lvl1.value[0];
-      const lvl3 = lvl2.value[0];
-      expect(lvl3.value[0]).toEqual({ type: 'truncated', value: 'Maximum nesting depth reached' });
+      const lvl1 = (locals.deep.value as SerializedValue[])[0];
+      const lvl2 = (lvl1.value as SerializedValue[])[0];
+      const lvl3 = (lvl2.value as SerializedValue[])[0];
+      expect((lvl3.value as SerializedValue[])[0]).toEqual({ type: 'truncated', value: 'Maximum nesting depth reached' });
     });
 
     it('truncates list items exceeding max limit (50)', () => {
@@ -280,8 +325,8 @@ large_list = list(range(60))
       const res = runPythonWrapper(code);
       const locals = res.steps[res.steps.length - 1].locals;
       expect(locals.large_list.type).toBe('list');
-      expect(locals.large_list.value.length).toBe(51); // 50 items + 1 truncation marker
-      expect(locals.large_list.value[50]).toEqual({ type: 'truncated', value: '... more' });
+      expect((locals.large_list.value as SerializedValue[]).length).toBe(51); // 50 items + 1 truncation marker
+      expect((locals.large_list.value as SerializedValue[])[50]).toEqual({ type: 'truncated', value: '... more' });
     });
 
     it('truncates dictionary keys exceeding max limit (50)', () => {
@@ -291,7 +336,7 @@ large_dict = {str(i): i for i in range(60)}
       const res = runPythonWrapper(code);
       const locals = res.steps[res.steps.length - 1].locals;
       expect(locals.large_dict.type).toBe('dict');
-      expect(locals.large_dict.value.__truncated__).toEqual({ type: 'truncated', value: '... more keys' });
+      expect((locals.large_dict.value as Record<string, SerializedValue>).__truncated__).toEqual({ type: 'truncated', value: '... more keys' });
     });
 
     it('truncates strings exceeding max length (200)', () => {
@@ -301,8 +346,8 @@ long_str = "x" * 250
       const res = runPythonWrapper(code);
       const locals = res.steps[res.steps.length - 1].locals;
       expect(locals.long_str.type).toBe('str');
-      expect(locals.long_str.value.length).toBe(215); // 200 + length of suffix "... (truncated)"
-      expect(locals.long_str.value).toContain('(truncated)');
+      expect((locals.long_str.value as string).length).toBe(215); // 200 + length of suffix "... (truncated)"
+      expect((locals.long_str.value as string)).toContain('(truncated)');
     });
   });
 

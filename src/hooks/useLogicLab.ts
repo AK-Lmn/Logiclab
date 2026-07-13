@@ -71,6 +71,11 @@ export function useLogicLab() {
   const jumpToFirst = useCallback(() => setCurrentStepIndex(0), []);
   const jumpToLast = useCallback(() => setCurrentStepIndex(totalSteps > 0 ? totalSteps - 1 : 0), [totalSteps]);
 
+  const reset = useCallback(() => {
+    setCurrentStepIndex(0);
+    setIsPlaying(false);
+  }, []);
+
   useEffect(() => {
     if (isPlaying) {
       const intervalMs = 1000 / (1.5 * playbackSpeed);
@@ -124,6 +129,7 @@ export function useLogicLab() {
     prevStep,
     jumpToFirst,
     jumpToLast,
-    togglePlay
+    togglePlay,
+    reset
   };
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Terminal, ListTree, Layers, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
 import { useLogicLab } from '../hooks/useLogicLab';
-import { SerializedValue } from '../types/execution';
+import { SerializedValue, TraceStep } from '../types/execution';
 
 interface InspectorPanelProps {
   lab: ReturnType<typeof useLogicLab>;
@@ -11,6 +11,62 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
   const step = lab.currentStep;
   const isError = lab.phase === 'error';
   const error = lab.result?.error;
+
+  const formatFrameLocals = (locals: Record<string, SerializedValue>) => {
+    const entries = Object.entries(locals);
+    if (entries.length === 0) return '';
+    
+    const formatted = entries.map(([k, v]) => {
+      let valStr = '';
+      if (!v) valStr = 'None';
+      else if (v.type === 'null') valStr = 'None';
+      else if (v.type === 'bool') valStr = v.value ? 'True' : 'False';
+      else if (v.type === 'str') valStr = `"${v.value}"`;
+      else if (v.type === 'list') valStr = `[${v.value.length > 0 ? '...' : ''}]`;
+      else if (v.type === 'tuple') valStr = `(${v.value.length > 0 ? '...' : ''})`;
+      else if (v.type === 'set') valStr = `{${v.value.length > 0 ? '...' : ''}}`;
+      else if (v.type === 'dict') valStr = `{${Object.keys(v.value).length > 0 ? '...' : ''}}`;
+      else valStr = String(v.value);
+      
+      return `${k} = ${valStr}`;
+    }).join(', ');
+
+    return ` — ${formatted}`;
+  };
+
+  const getFrameLabel = (frame: { functionName: string; locals: Record<string, SerializedValue> }) => {
+    const name = frame.functionName || '<caller>';
+    if (name === '<module>') {
+      return '<module>';
+    }
+    const localsString = formatFrameLocals(frame.locals);
+    return `${name}${localsString}`;
+  };
+
+  const getStackFrames = (currentStep: TraceStep | null) => {
+    if (!currentStep) return [];
+    if (currentStep.stack) {
+      return currentStep.stack;
+    }
+    // Fallback for backward compatibility or when stack is not populated
+    const frames = [];
+    for (let i = 0; i < currentStep.callDepth; i++) {
+      if (i === currentStep.callDepth - 1) {
+        frames.push({
+          functionName: currentStep.functionName,
+          locals: currentStep.locals,
+          line: currentStep.line
+        });
+      } else {
+        frames.push({
+          functionName: '<caller>',
+          locals: {},
+          line: 0
+        });
+      }
+    }
+    return frames;
+  };
 
   const renderValue = (val: SerializedValue): React.ReactNode => {
     if (!val) return <span className="text-slate-500">undefined</span>;
@@ -125,13 +181,32 @@ export function InspectorPanel({ lab }: InspectorPanelProps) {
             <div className="p-3 overflow-auto flex-1 flex flex-col gap-2">
               {!step ? (
                  <div className="text-slate-500 text-sm italic h-full flex items-center justify-center">Empty stack</div>
-              ) : (
-                Array.from({ length: step.callDepth }).map((_, i) => (
-                  <div key={i} className={"px-3 py-1.5 rounded text-sm font-mono border " + (i === step.callDepth - 1 ? 'bg-violet-500/20 border-violet-500/50 text-violet-200' : 'bg-charcoal-900 border-charcoal-700 text-slate-400')}>
-                    {i === step.callDepth - 1 ? step.functionName : '<caller>'}
-                  </div>
-                )).reverse()
-              )}
+              ) : (() => {
+                const stack = getStackFrames(step);
+                return [...stack].reverse().map((frame, idx) => {
+                  const originalIdx = stack.length - 1 - idx;
+                  const isCurrent = originalIdx === stack.length - 1;
+                  const cardClass = "px-3 py-1.5 rounded text-sm font-mono border break-all transition-colors flex items-center justify-between gap-2 " + 
+                    (isCurrent 
+                      ? 'bg-violet-500/20 border-violet-500/50 text-violet-200 font-semibold shadow-sm shadow-violet-900/10' 
+                      : 'bg-charcoal-900 border-charcoal-700 text-slate-400');
+                  
+                  return (
+                    <div 
+                      key={originalIdx} 
+                      className={cardClass}
+                      style={{ paddingLeft: `${Math.min(originalIdx, 6) * 6 + 12}px` }}
+                    >
+                      <span className="break-all">{getFrameLabel(frame)}</span>
+                      {isCurrent && (
+                        <span className="text-[10px] bg-violet-500/30 text-violet-300 px-1.5 py-0.5 rounded font-sans uppercase tracking-wider font-bold shrink-0">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
           

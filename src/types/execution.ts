@@ -13,6 +13,12 @@ export type SerializedValue =
 
 export type TraceEvent = 'line' | 'call' | 'return' | 'exception';
 
+export type StackFrame = {
+  functionName: string;
+  locals: Record<string, SerializedValue>;
+  line: number;
+};
+
 export type TraceStep = {
   id: number;
   event: TraceEvent;
@@ -27,6 +33,7 @@ export type TraceStep = {
     name: string;
     message: string;
   };
+  stack?: StackFrame[];
 };
 
 export type ExecutionResult = {
