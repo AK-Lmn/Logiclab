@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <path d="M 7 25 H 16 V 16 H 25 V 7" stroke="#a78bfa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="7" cy="25" r="4" fill="#8b5cf6" />
-  <circle cx="16" cy="16" r="4" fill="#8b5cf6" />
-  <circle cx="25" cy="7" r="4" fill="#f59e0b" />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title"><title id="title">LogicLab</title><rect width="256" height="256" rx="32" fill="#193c2a"/><path d="M32 32H128V64H64V192H192V128H224V224H32Z M160 32H224V96H160Z" fill="#ffffff"/></svg>

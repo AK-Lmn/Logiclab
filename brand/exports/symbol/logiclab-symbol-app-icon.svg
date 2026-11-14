@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">LogicLab app icon</title>
+  <path fill="#193c2a" d="M0 0H256V256H0Z"/>
+  <path fill="#ffffff" transform="translate(32 32) scale(.75)" d="M32 32H128V63H63V193H193V128H224V224H32Z M153 41H215V103H153Z"/>
+</svg>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LogicLab identity quick guide</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e5e1d8; color: #193c2a; font: 17px/1.5 Arial, sans-serif; }
+    main { width: 1400px; padding: 54px 64px 42px; }
+    header, footer { display: flex; justify-content: space-between; gap: 40px; font-size: 13px; }
+    header { text-transform: uppercase; letter-spacing: .12em; }
+    .hero { display: flex; justify-content: space-between; align-items: center; gap: 64px; padding: 56px 0 44px; }
+    .lockup { width: 830px; height: auto; display: block; }
+    .tile { width: 210px; height: 210px; border-radius: 24px; }
+    .idea { margin: 22px 0 0; color: #3c483e; }
+    .details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 44px; padding-top: 26px; border-top: 1px solid #a6ad9e; }
+    h2 { font-size: 17px; font-weight: 600; margin: 0 0 24px; }
+    p { margin: 0 0 12px; }
+    .ladder { height: 110px; display: flex; align-items: end; gap: 27px; margin-bottom: 26px; }
+    .ladder figure { margin: 0; min-width: 48px; }
+    .ladder img { display: block; }
+    figcaption { margin-top: 10px; font-size: 13px; color: #3c483e; }
+    .colors { display: flex; gap: 16px; margin-bottom: 34px; height: 102px; }
+    .colors figure { margin: 0; }
+    .swatch { display: block; width: 72px; height: 64px; border: 1px solid #a6ad9e; }
+    .forest { background: #193c2a; } .paper { background: #e5e1d8; }
+    .ink { background: #242c25; } .white { background: #fff; }
+    .notes p { margin-bottom: 15px; }
+    .muted { color: #3c483e; }
+    footer { margin-top: 38px; padding-top: 22px; border-top: 1px solid #a6ad9e; color: #3c483e; }
+  </style>
+</head>
+<body>
+  <main>
+    <header><span>LogicLab / identity guide</span><span>Open Frame / 14 November 2026</span></header>
+    <div class="hero">
+      <div><img class="lockup" src="masters/logiclab-horizontal.svg" alt="LogicLab horizontal logo"><p class="idea">An open frame brings one block into view.</p></div>
+      <img class="tile" src="masters/logiclab-app-icon.svg" alt="LogicLab app icon">
+    </div>
+    <div class="details">
+      <section>
+        <h2>01 / Size and space</h2>
+        <div class="ladder">
+          <figure><img src="masters/logiclab-symbol-small.svg" width="16" height="16" alt="16 pixel small symbol"><figcaption>16px</figcaption></figure>
+          <figure><img src="masters/logiclab-symbol.svg" width="24" height="24" alt="24 pixel symbol"><figcaption>24px</figcaption></figure>
+          <figure><img src="masters/logiclab-symbol.svg" width="32" height="32" alt="32 pixel symbol"><figcaption>32px</figcaption></figure>
+          <figure><img src="masters/logiclab-symbol.svg" width="64" height="64" alt="64 pixel symbol"><figcaption>64px</figcaption></figure>
+        </div>
+        <p>Small cut below 24px.</p>
+        <p>Horizontal logo: 160px minimum.</p>
+        <p>Clear space: one frame thickness.</p>
+      </section>
+      <section>
+        <h2>02 / Color</h2>
+        <div class="colors">
+          <figure><span class="swatch forest"></span><figcaption>#193C2A</figcaption></figure>
+          <figure><span class="swatch paper"></span><figcaption>#E5E1D8</figcaption></figure>
+          <figure><span class="swatch ink"></span><figcaption>#242C25</figcaption></figure>
+          <figure><span class="swatch white"></span><figcaption>#FFFFFF</figcaption></figure>
+        </div>
+        <p>Forest on paper. White on forest.</p>
+        <p>Use the supplied reversed artwork.</p>
+        <p>Proof print colors before production.</p>
+      </section>
+      <section class="notes">
+        <h2>03 / Keep it clear</h2>
+        <p>Use outlined SVG masters.</p>
+        <p>Preserve the open corner and block.</p>
+        <p>Do not stretch, rotate, or add effects.</p>
+        <p>Use a solid tile over busy imagery.</p>
+        <p class="muted">Trademark clearance remains open.<br>See usage-guide.md for the full rules.</p>
+      </section>
+    </div>
+    <footer><span>One idea. One color. A clear view of the next step.</span><span>SVG / PNG / favicon / app icons</span></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,232 @@
+{
+  "primitive": {
+    "bg": {
+      "$type": "color",
+      "$value": "#e5e1d8"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "#dad5ca"
+    },
+    "ink": {
+      "$type": "color",
+      "$value": "#2a1d17"
+    },
+    "muted": {
+      "$type": "color",
+      "$value": "#65564c"
+    },
+    "accent": {
+      "$type": "color",
+      "$value": "#456f3a"
+    },
+    "accent-ink": {
+      "$type": "color",
+      "$value": "#ffffff"
+    },
+    "action": {
+      "$type": "color",
+      "$value": "#456f3a"
+    },
+    "action-ink": {
+      "$type": "color",
+      "$value": "#ffffff"
+    },
+    "inv-bg": {
+      "$type": "color",
+      "$value": "#2a1d17"
+    },
+    "inv-surface": {
+      "$type": "color",
+      "$value": "#352822"
+    },
+    "inv-ink": {
+      "$type": "color",
+      "$value": "#e5e1d8"
+    },
+    "inv-muted": {
+      "$type": "color",
+      "$value": "#9e968e"
+    },
+    "inv-accent": {
+      "$type": "color",
+      "$value": "#e5e1d8"
+    },
+    "inv-accent-ink": {
+      "$type": "color",
+      "$value": "#2a1d17"
+    },
+    "inv-action": {
+      "$type": "color",
+      "$value": "#e5e1d8"
+    },
+    "inv-action-ink": {
+      "$type": "color",
+      "$value": "#2a1d17"
+    }
+  },
+  "semantic": {
+    "surface": {
+      "page": {
+        "$type": "color",
+        "$value": "{primitive.bg}"
+      },
+      "card": {
+        "$type": "color",
+        "$value": "#faf9f5"
+      },
+      "raised": {
+        "$type": "color",
+        "$value": "#eeece5"
+      },
+      "editor": {
+        "$type": "color",
+        "$value": "#18231f"
+      },
+      "editor-raised": {
+        "$type": "color",
+        "$value": "#202e28"
+      }
+    },
+    "text": {
+      "primary": {
+        "$type": "color",
+        "$value": "#242c25"
+      },
+      "secondary": {
+        "$type": "color",
+        "$value": "#3c483e"
+      },
+      "tertiary": {
+        "$type": "color",
+        "$value": "{semantic.text.secondary}"
+      },
+      "link": {
+        "$type": "color",
+        "$value": "#244b36"
+      },
+      "on-action": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "inverse": {
+        "$type": "color",
+        "$value": "#f0f2e9"
+      },
+      "inverse-muted": {
+        "$type": "color",
+        "$value": "#bdcbbf"
+      }
+    },
+    "action": {
+      "primary": {
+        "$type": "color",
+        "$value": "#193c2a"
+      },
+      "hover": {
+        "$type": "color",
+        "$value": "#193c2a"
+      },
+      "destructive": {
+        "$type": "color",
+        "$value": "#7e2922"
+      },
+      "danger": {
+        "$type": "color",
+        "$value": "{semantic.action.destructive}"
+      }
+    },
+    "border": {
+      "default": {
+        "$type": "color",
+        "$value": "#c8ccc1"
+      },
+      "strong": {
+        "$type": "color",
+        "$value": "#75806f"
+      },
+      "focus": {
+        "$type": "color",
+        "$value": "#244b36"
+      },
+      "inverse": {
+        "$type": "color",
+        "$value": "#64796a"
+      }
+    },
+    "status": {
+      "error": {
+        "$type": "color",
+        "$value": "{semantic.action.destructive}"
+      },
+      "error-surface": {
+        "$type": "color",
+        "$value": "#f8e9e4"
+      },
+      "success": {
+        "$type": "color",
+        "$value": "#244b36"
+      },
+      "success-surface": {
+        "$type": "color",
+        "$value": "#e4ecdf"
+      },
+      "warning": {
+        "$type": "color",
+        "$value": "#674508"
+      },
+      "warning-surface": {
+        "$type": "color",
+        "$value": "#f5ecd5"
+      }
+    },
+    "editor": {
+      "text": {
+        "$type": "color",
+        "$value": "#edf1e8"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "#bdcbbf"
+      },
+      "keyword": {
+        "$type": "color",
+        "$value": "#bce5c5"
+      },
+      "string": {
+        "$type": "color",
+        "$value": "#e9cfa0"
+      },
+      "number": {
+        "$type": "color",
+        "$value": "#c6def7"
+      },
+      "comment": {
+        "$type": "color",
+        "$value": "#b4c3b7"
+      },
+      "execution": {
+        "$type": "color",
+        "$value": "#344d3c"
+      },
+      "error": {
+        "$type": "color",
+        "$value": "#59362f"
+      },
+      "selection": {
+        "$type": "color",
+        "$value": "#43634c"
+      },
+      "caret": {
+        "$type": "color",
+        "$value": "#ffffff"
+      }
+    },
+    "overlay": {
+      "scrim": {
+        "$type": "color",
+        "$value": "#18231fcc"
+      }
+    }
+  }
+}
