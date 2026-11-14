@@ -66,6 +66,25 @@ describe('useLogicLab Hook', () => {
     expect(result.current.result).toEqual(mockResult);
   });
 
+  it('clears a previous trace when editing resumes while preserving source', async () => {
+    const mockResult = {
+      steps: [{ id: 1, event: 'line' as const, line: 1, functionName: '', callDepth: 0, locals: {}, stdout: '', stdoutDelta: '' }],
+      stdout: '', error: { name: 'ValueError', message: 'old error', line: 1 }, durationMs: 10, truncated: false,
+    };
+    vi.spyOn(executeModule, 'executeCode').mockResolvedValueOnce(mockResult);
+    const { result } = renderHook(() => useLogicLab());
+    await act(async () => { await result.current.handleRun(); });
+    expect(result.current.result).toEqual(mockResult);
+    const source = result.current.code;
+    act(() => { result.current.handleEdit(); });
+    expect(result.current.phase).toBe('editing');
+    expect(result.current.code).toBe(source);
+    expect(result.current.result).toBeNull();
+    expect(result.current.currentStep).toBeNull();
+    expect(result.current.currentStepIndex).toBe(0);
+    expect(result.current.isPlaying).toBe(false);
+  });
+
   it('handles stepping forward and backward', async () => {
     const mockResult = {
       steps: [
@@ -95,7 +114,6 @@ describe('useLogicLab Hook', () => {
     act(() => {
       result.current.nextStep();
     });
-    // Should not exceed bounds
     expect(result.current.currentStepIndex).toBe(1);
 
     act(() => {
@@ -128,7 +146,6 @@ describe('useLogicLab Hook', () => {
     });
     expect(result.current.currentStepIndex).toBe(1);
 
-    // Play
     act(() => {
       result.current.togglePlay();
     });

@@ -13,7 +13,7 @@ print(run_logiclab(${JSON.stringify(userCode)}))
     const stdout = execSync('python', {
       input: runnerScript,
       encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'] // capture stdout and stderr
+      stdio: ['pipe', 'pipe', 'pipe']
     });
     return JSON.parse(stdout.trim()) as ExecutionResult;
   } catch (err: unknown) {
@@ -153,14 +153,12 @@ res = add(3, 4)
       const res = runPythonWrapper(code);
       expect(res.error).toBeNull();
       
-      // Verify call step
       const callSteps = res.steps.filter(s => s.event === 'call' && s.functionName !== '<module>');
       expect(callSteps.length).toBe(1);
       expect(callSteps[0].functionName).toBe('add');
       expect(callSteps[0].locals.a).toEqual({ type: 'int', value: 3 });
       expect(callSteps[0].locals.b).toEqual({ type: 'int', value: 4 });
 
-      // Verify return step
       const returnSteps = res.steps.filter(s => s.event === 'return' && s.functionName !== '<module>');
       expect(returnSteps.length).toBe(1);
       expect(returnSteps[0].returnValue).toEqual({ type: 'int', value: 7 });
@@ -178,31 +176,26 @@ res = fact(3)
       expect(res.error).toBeNull();
       
       const callSteps = res.steps.filter(s => s.event === 'call' && s.functionName !== '<module>');
-      expect(callSteps.length).toBe(3); // fact(3), fact(2), fact(1)
+      expect(callSteps.length).toBe(3);
       
-      // Check depth tracking (fact(3) starts at depth 2 since <module> is depth 1)
       expect(callSteps[0].callDepth).toBe(2);
       expect(callSteps[1].callDepth).toBe(3);
       expect(callSteps[2].callDepth).toBe(4);
 
-      // Verify stack snapshots for the call steps
-      // For fact(3)
       const stack0 = callSteps[0].stack;
       expect(stack0).toBeDefined();
-      expect(stack0?.length).toBe(2); // <module>, fact
+      expect(stack0?.length).toBe(2);
       expect(stack0?.[0].functionName).toBe('<module>');
       expect(stack0?.[1].functionName).toBe('fact');
       expect(stack0?.[1].locals.n).toEqual({ type: 'int', value: 3 });
 
-      // For fact(2)
       const stack1 = callSteps[1].stack;
-      expect(stack1?.length).toBe(3); // <module>, fact, fact
+      expect(stack1?.length).toBe(3);
       expect(stack1?.[1].locals.n).toEqual({ type: 'int', value: 3 });
       expect(stack1?.[2].locals.n).toEqual({ type: 'int', value: 2 });
 
-      // For fact(1)
       const stack2 = callSteps[2].stack;
-      expect(stack2?.length).toBe(4); // <module>, fact, fact, fact
+      expect(stack2?.length).toBe(4);
       expect(stack2?.[1].locals.n).toEqual({ type: 'int', value: 3 });
       expect(stack2?.[2].locals.n).toEqual({ type: 'int', value: 2 });
       expect(stack2?.[3].locals.n).toEqual({ type: 'int', value: 1 });
@@ -219,11 +212,10 @@ res = outer_func(5)
       const res = runPythonWrapper(code);
       expect(res.error).toBeNull();
       
-      // Find the step executing inside inner_func
       const innerStep = res.steps.find(s => s.functionName === 'inner_func' && s.event === 'line');
       expect(innerStep).toBeDefined();
       expect(innerStep?.stack).toBeDefined();
-      expect(innerStep?.stack?.length).toBe(3); // <module>, outer_func, inner_func
+      expect(innerStep?.stack?.length).toBe(3);
       expect(innerStep?.stack?.[0].functionName).toBe('<module>');
       expect(innerStep?.stack?.[1].functionName).toBe('outer_func');
       expect(innerStep?.stack?.[2].functionName).toBe('inner_func');
@@ -240,7 +232,6 @@ print("world")
       expect(res.error).toBeNull();
       expect(res.stdout).toBe('hello\nworld\n');
       
-      // Trace steps should accumulate stdout
       const lastStep = res.steps[res.steps.length - 1];
       expect(lastStep.stdout).toBe('hello\nworld\n');
     });
@@ -255,7 +246,7 @@ divide()
       expect(res.error).toBeDefined();
       expect(res.error?.name).toBe('ZeroDivisionError');
       expect(res.error?.message).toContain('division by zero');
-      expect(res.error?.line).toBe(3); // points to line 3 inside user code
+      expect(res.error?.line).toBe(3);
     });
   });
 
@@ -301,16 +292,10 @@ dct = {"a": 7}
 
     it('truncates deeply nested objects exceeding max depth (3)', () => {
       const code = `
-# Nesting depth: 4
 deep = [[[[42]]]]
 `;
       const res = runPythonWrapper(code);
       const locals = res.steps[res.steps.length - 1].locals;
-      // level 0: deep (list)
-      // level 1: [ [[42]] ]
-      // level 2: [ [42] ]
-      // level 3: [ 42 ]
-      // level 4: truncated
       expect(locals.deep.type).toBe('list');
       const lvl1 = (locals.deep.value as SerializedValue[])[0];
       const lvl2 = (lvl1.value as SerializedValue[])[0];
@@ -325,7 +310,7 @@ large_list = list(range(60))
       const res = runPythonWrapper(code);
       const locals = res.steps[res.steps.length - 1].locals;
       expect(locals.large_list.type).toBe('list');
-      expect((locals.large_list.value as SerializedValue[]).length).toBe(51); // 50 items + 1 truncation marker
+      expect((locals.large_list.value as SerializedValue[]).length).toBe(51);
       expect((locals.large_list.value as SerializedValue[])[50]).toEqual({ type: 'truncated', value: '... more' });
     });
 
@@ -346,7 +331,7 @@ long_str = "x" * 250
       const res = runPythonWrapper(code);
       const locals = res.steps[res.steps.length - 1].locals;
       expect(locals.long_str.type).toBe('str');
-      expect((locals.long_str.value as string).length).toBe(215); // 200 + length of suffix "... (truncated)"
+      expect((locals.long_str.value as string).length).toBe(215);
       expect((locals.long_str.value as string)).toContain('(truncated)');
     });
   });

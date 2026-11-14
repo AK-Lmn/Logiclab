@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import colors from '../../tokens/colors.json';
+import { LogicLabMark } from '../components/LogicLabMark';
 
 export const contentType = 'image/png';
 
@@ -18,33 +20,20 @@ export function generateImageMetadata() {
 export default async function Icon({ id }: { id: Promise<string> }) {
   const is512 = (await id) === '512';
   const dimension = is512 ? 512 : 192;
-  const padding = is512 ? '64px' : '24px';
   
   return new ImageResponse(
     (
       <div
         style={{
-          background: '#09090b',
+          background: colors.semantic.action.primary.$value,
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: padding,
         }}
       >
-        <svg width="80%" height="80%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M 5 19 H 12 V 12 H 19 V 5"
-            stroke="#a78bfa"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <circle cx="5" cy="19" r="3.5" fill="#8b5cf6" />
-          <circle cx="12" cy="12" r="3.5" fill="#8b5cf6" />
-          <circle cx="19" cy="5" r="3.5" fill="#f59e0b" />
-        </svg>
+        <LogicLabMark size={dimension * .75} color={colors.primitive['accent-ink'].$value} variant="reverse" />
       </div>
     ),
     {

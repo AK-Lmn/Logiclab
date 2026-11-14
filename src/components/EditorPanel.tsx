@@ -1,8 +1,12 @@
-import React, { useMemo } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { python } from '@codemirror/lang-python';
-import { EditorView, lineNumbers } from '@codemirror/view';
-import { Extension } from '@codemirror/state';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { pythonLanguage } from '@codemirror/lang-python';
+import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers } from '@codemirror/view';
+import { Annotation, Compartment, EditorState } from '@codemirror/state';
+import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
+import { tags } from '@lezer/highlight';
 
 interface EditorPanelProps {
   code: string;
@@ -12,95 +16,118 @@ interface EditorPanelProps {
   errorLine?: number;
 }
 
-// Move static custom theme outside the component to avoid unnecessary recreations
 const customTheme = EditorView.theme({
-  "&": {
-    backgroundColor: "var(--color-charcoal-900)",
-    color: "#e2e8f0",
-    height: "100%",
-    width: "100%",
-    maxWidth: "100%",
-    minWidth: "0",
-    fontSize: "14px",
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  },
-  ".cm-scroller": {
-    overflowX: "auto",
-  },
-  ".cm-content": {
-    paddingTop: "16px",
-    paddingBottom: "16px",
-  },
-  ".cm-gutters": {
-    backgroundColor: "var(--color-charcoal-800)",
-    color: "#64748b",
-    border: "none",
-  },
-  ".cm-activeLine": {
-    backgroundColor: "rgba(139, 92, 246, 0.1)", // violet-500/10
-  },
-  ".cm-activeLineGutter": {
-    backgroundColor: "rgba(139, 92, 246, 0.2)", // violet-500/20
-    color: "#c4b5fd", // violet-300
-  },
-  ".cm-execution-line": {
-    backgroundColor: "rgba(245, 158, 11, 0.2) !important", // amber-500/20
-  },
-  ".cm-error-line": {
-    backgroundColor: "rgba(239, 68, 68, 0.2) !important", // red-500/20
-  }
+  '&': { backgroundColor: 'var(--color-surface-editor)', color: 'var(--color-editor-text)', height: '100%', width: '100%', maxWidth: '100%', minWidth: '0', fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' },
+  '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-mono)', lineHeight: 'var(--line-code)' },
+  '.cm-content': { paddingBlock: 'var(--space-4)', caretColor: 'var(--color-editor-caret)' },
+  '.cm-gutters': { backgroundColor: 'var(--color-surface-editor)', color: 'var(--color-editor-muted)', border: 'none', paddingInline: 'var(--space-2)' },
+  '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: 'var(--color-surface-editor-raised)' },
+  '.cm-execution-line': { backgroundColor: 'var(--color-editor-execution)' },
+  '.cm-error-line': { backgroundColor: 'var(--color-editor-error)' },
+  '&.cm-focused': { outline: 'var(--size-focus-ring) solid var(--color-border-inverse)', outlineOffset: 'calc(-1 * var(--size-focus-ring))' },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': { backgroundColor: 'var(--color-editor-selection)' },
+  '.cm-cursor': { borderLeftColor: 'var(--color-editor-caret)' },
 }, { dark: true });
 
+const syntaxColors = HighlightStyle.define([
+  { tag: [tags.keyword, tags.bool, tags.null], color: 'var(--color-editor-keyword)' },
+  { tag: [tags.string, tags.special(tags.string)], color: 'var(--color-editor-string)' },
+  { tag: tags.number, color: 'var(--color-editor-number)' },
+  { tag: tags.comment, color: 'var(--color-editor-comment)' },
+  { tag: [tags.variableName, tags.function(tags.variableName), tags.operator, tags.punctuation], color: 'var(--color-editor-text)' },
+]);
+
+const externalChange = Annotation.define<boolean>();
+const baseExtensions = [
+  pythonLanguage, customTheme, syntaxHighlighting(syntaxColors), lineNumbers(),
+  highlightSpecialChars(), history(), drawSelection(), indentOnInput(), bracketMatching(),
+  closeBrackets(),
+  keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
+  EditorState.allowMultipleSelections.of(false),
+];
+
 export function EditorPanel({ code, setCode, readOnly, currentLine, errorLine }: EditorPanelProps) {
-  
-  const extensions = useMemo(() => {
-    const exts: Extension[] = [python(), customTheme, lineNumbers()];
-    
-    if (readOnly) {
-      const themeExt = EditorView.baseTheme({
-        ".cm-execution-line": { backgroundColor: "rgba(245, 158, 11, 0.2)" },
-        ".cm-error-line": { backgroundColor: "rgba(239, 68, 68, 0.2)" }
-      });
-      
-      exts.push(themeExt);
-    }
-    
-    return exts;
-  }, [readOnly]);
+  const host = useRef<HTMLDivElement>(null);
+  const editor = useRef<EditorView | null>(null);
+  const pointer = useRef<HTMLSpanElement>(null);
+  const activeLine = useRef(readOnly ? currentLine : undefined);
+  const onChange = useRef(setCode);
+  const [configuration] = useState(() => new Compartment());
+  const extensions = useMemo(() => [
+    EditorState.readOnly.of(readOnly), EditorView.editable.of(!readOnly),
+    readOnly ? [] : [highlightActiveLine(), highlightActiveLineGutter()],
+    EditorView.contentAttributes.of({ role: 'textbox', 'aria-label': 'Python source code', 'aria-describedby': 'code-position', 'aria-multiline': 'true', 'aria-readonly': String(readOnly), tabindex: '0' }),
+    EditorView.decorations.of(view => {
+      const lines = [...new Set([currentLine, errorLine])].filter((line): line is number => !!line && line <= view.state.doc.lines);
+      return Decoration.set(lines.map(line => Decoration.line({ class: line === errorLine ? 'cm-error-line' : 'cm-execution-line' }).range(view.state.doc.line(line).from)), true);
+    }),
+  ], [currentLine, errorLine, readOnly]);
+  const initial = useRef({ code, extensions });
+
+  const positionPointer = useCallback((view: EditorView) => {
+    view.requestMeasure({
+      key: pointer.current,
+      read(currentView) {
+        const line = activeLine.current;
+        if (!line || line > currentView.state.doc.lines || !host.current || !pointer.current) return null;
+        const coordinates = currentView.coordsAtPos(currentView.state.doc.line(line).from);
+        if (!coordinates) return null;
+        const bounds = host.current.getBoundingClientRect();
+        const height = pointer.current.getBoundingClientRect().height;
+        const y = (coordinates.top + coordinates.bottom) / 2 - bounds.top - height / 2;
+        return y >= 0 && y + height <= bounds.height ? y : null;
+      },
+      write(y) {
+        const marker = pointer.current;
+        if (!marker) return;
+        marker.style.visibility = y === null ? 'hidden' : 'visible';
+        if (y !== null) marker.style.transform = `translateY(${y}px)`;
+      },
+    });
+  }, []);
+
+  useEffect(() => { onChange.current = setCode; }, [setCode]);
+
+  useEffect(() => {
+    if (!host.current) return;
+    const view = new EditorView({
+      parent: host.current,
+      state: EditorState.create({ doc: initial.current.code, extensions: [
+        baseExtensions, configuration.of(initial.current.extensions),
+        EditorView.updateListener.of(update => {
+          if (update.docChanged && !update.state.readOnly && !update.transactions.some(transaction => transaction.annotation(externalChange))) {
+            onChange.current(update.state.doc.toString());
+          }
+          if (update.geometryChanged || update.viewportChanged || update.transactions.length) positionPointer(update.view);
+        }),
+      ] }),
+    });
+    editor.current = view;
+    const onScroll = () => {
+      if (pointer.current) pointer.current.dataset.scrolling = 'true';
+      positionPointer(view);
+    };
+    view.scrollDOM.addEventListener('scroll', onScroll, { passive: true });
+    return () => { view.scrollDOM.removeEventListener('scroll', onScroll); view.destroy(); editor.current = null; };
+  }, [configuration, positionPointer]);
+
+  useEffect(() => {
+    const view = editor.current;
+    if (!view) return;
+    activeLine.current = readOnly ? currentLine : undefined;
+    if (pointer.current) delete pointer.current.dataset.scrolling;
+    if (view.state.doc.toString() !== code) view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: code }, annotations: externalChange.of(true) });
+    view.dispatch({ effects: configuration.reconfigure(extensions) });
+    const line = currentLine || errorLine;
+    if (line && line <= view.state.doc.lines) view.dispatch({ effects: EditorView.scrollIntoView(view.state.doc.line(line).from, { y: 'center' }) });
+    positionPointer(view);
+  }, [code, configuration, currentLine, errorLine, extensions, positionPointer, readOnly]);
 
   return (
-    <div 
-      className="h-full w-full absolute inset-0 overflow-auto max-w-full min-w-0"
-      style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}
-    >
-      <CodeMirror
-        value={code}
-        height="100%"
-        theme="dark" // fallback base
-        extensions={extensions}
-        editable={!readOnly}
-        onChange={(val) => {
-          if (!readOnly) setCode(val);
-        }}
-        basicSetup={{
-          lineNumbers: true,
-          highlightActiveLineGutter: !readOnly,
-          highlightActiveLine: !readOnly,
-          foldGutter: false,
-          dropCursor: false,
-          allowMultipleSelections: false,
-          indentOnInput: true,
-          bracketMatching: true,
-          closeBrackets: true,
-          autocompletion: false, // user requested no autocomplete
-        }}
-        className="h-full w-full max-w-full min-w-0"
-      />
-      {/* Hack for MVP to highlight lines since CM6 state fields can be tricky without proper setup */}
-      <style>{`
-        ${currentLine ? ".cm-line:nth-child(" + currentLine + ") { background-color: rgba(245, 158, 11, 0.2) !important; border-left: 2px solid #f59e0b; }" : ""}
-        ${errorLine ? ".cm-line:nth-child(" + errorLine + ") { background-color: rgba(239, 68, 68, 0.2) !important; border-left: 2px solid #ef4444; }" : ""}
-      `}</style>
+    <div className="editor-panel">
+      <div ref={host} className="code-editor-view" />
+      <span ref={pointer} className="execution-pointer" aria-hidden="true"><ArrowRight /></span>
+      <p id="code-position" className="sr-only">{currentLine ? `Execution is at line ${currentLine}.` : 'Python source editor.'}{errorLine ? ` An error occurred at line ${errorLine}.` : ''}</p>
     </div>
   );
 }

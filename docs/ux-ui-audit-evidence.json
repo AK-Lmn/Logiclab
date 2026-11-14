@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-14",
+  "timezone": "Asia/Manila",
+  "baseline_commit": "581435feb0cbf501b6246530199b82c47bb61053",
+  "scope": "Source review, declared-color contrast calculations, and React/JSDOM proof tests. No completed browser conformance review.",
+  "tool_scripts_root": "C:/Users/ckzz2/OneDrive/Documents/GitHub/memory/skills/ux-ui-agent-skills/scripts",
+  "python": "C:/Users/ckzz2/AppData/Roaming/uv/python/cpython-3.13-windows-x86_64-none/python.exe",
+  "fresh_checks": [
+    {
+      "id": "primary_contrast",
+      "command": "contrast.py '#ffffff' '#8b5cf6'",
+      "exit_code": 1,
+      "output": "Contrast #ffffff on #8b5cf6: 4.23:1\r\n\r\n  Normal text  AA  (4.5:1): FAIL\r\n  Normal text  AAA (7.0:1): FAIL\r\n  Large text   AA  (3.0:1): PASS\r\n  Large text   AAA (4.5:1): FAIL\r\n  UI / graphics    (3.0:1): PASS\r\n"
+    },
+    {
+      "id": "hover_contrast",
+      "command": "contrast.py '#ffffff' '#a78bfa'",
+      "exit_code": 1,
+      "output": "Contrast #ffffff on #a78bfa: 2.72:1\r\n\r\n  Normal text  AA  (4.5:1): FAIL\r\n  Normal text  AAA (7.0:1): FAIL\r\n  Large text   AA  (3.0:1): FAIL\r\n  Large text   AAA (4.5:1): FAIL\r\n  UI / graphics    (3.0:1): FAIL\r\n"
+    },
+    {
+      "id": "gutter_contrast",
+      "command": "contrast.py '#64748b' '#22263d'",
+      "exit_code": 1,
+      "output": "Contrast #64748b on #22263d: 3.12:1\r\n\r\n  Normal text  AA  (4.5:1): FAIL\r\n  Normal text  AAA (7.0:1): FAIL\r\n  Large text   AA  (3.0:1): PASS\r\n  Large text   AAA (4.5:1): FAIL\r\n  UI / graphics    (3.0:1): PASS\r\n"
+    },
+    {
+      "id": "body_contrast",
+      "command": "contrast.py '#e2e8f0' '#0a0c16'",
+      "exit_code": 0,
+      "output": "Contrast #e2e8f0 on #0a0c16: 15.82:1\r\n\r\n  Normal text  AA  (4.5:1): PASS\r\n  Normal text  AAA (7.0:1): PASS\r\n  Large text   AA  (3.0:1): PASS\r\n  Large text   AAA (4.5:1): PASS\r\n  UI / graphics    (3.0:1): PASS\r\n"
+    },
+    {
+      "id": "hardcodes",
+      "command": "lint_hardcodes.py src",
+      "exit_code": 1,
+      "output": "src\\app\\apple-icon.tsx:14: hardcoded hex '#09090b': use a token\r\nsrc\\app\\apple-icon.tsx:20: hardcoded px '24px': use a token\r\nsrc\\app\\apple-icon.tsx:26: hardcoded hex '#a78bfa': use a token\r\nsrc\\app\\apple-icon.tsx:31: hardcoded hex '#8b5cf6': use a token\r\nsrc\\app\\apple-icon.tsx:32: hardcoded hex '#8b5cf6': use a token\r\nsrc\\app\\apple-icon.tsx:33: hardcoded hex '#f59e0b': use a token\r\nsrc\\app\\globals.css:20: hardcoded hex '#e2e8f0': use a token\r\nsrc\\app\\globals.css:21: hardcoded font-family 'literal font-family': use a token\r\nsrc\\app\\globals.css:28: hardcoded px '8px': use a token\r\nsrc\\app\\globals.css:29: hardcoded px '8px': use a token\r\nsrc\\app\\globals.css:38: hardcoded px '4px': use a token\r\nsrc\\app\\icon.tsx:21: hardcoded px '64px': use a token\r\nsrc\\app\\icon.tsx:21: hardcoded px '24px': use a token\r\nsrc\\app\\icon.tsx:27: hardcoded hex '#09090b': use a token\r\nsrc\\app\\icon.tsx:39: hardcoded hex '#a78bfa': use a token\r\nsrc\\app\\icon.tsx:44: hardcoded hex '#8b5cf6': use a token\r\nsrc\\app\\icon.tsx:45: hardcoded hex '#8b5cf6': use a token\r\nsrc\\app\\icon.tsx:46: hardcoded hex '#f59e0b': use a token\r\nsrc\\app\\layout.tsx:21: hardcoded hex '#09090b': use a token\r\nsrc\\app\\manifest.ts:10: hardcoded hex '#09090b': use a token\r\nsrc\\app\\manifest.ts:11: hardcoded hex '#8b5cf6': use a token\r\nsrc\\components\\EditorPanel.tsx:19: hardcoded hex '#e2e8f0': use a token\r\nsrc\\components\\EditorPanel.tsx:24: hardcoded px '14px': use a token\r\nsrc\\components\\EditorPanel.tsx:31: hardcoded px '16px': use a token\r\nsrc\\components\\EditorPanel.tsx:32: hardcoded px '16px': use a token\r\nsrc\\components\\EditorPanel.tsx:36: hardcoded hex '#64748b': use a token\r\nsrc\\components\\EditorPanel.tsx:44: hardcoded hex '#c4b5fd': use a token\r\nsrc\\components\\EditorPanel.tsx:101: hardcoded hex '#f59e0b': use a token\r\nsrc\\components\\EditorPanel.tsx:101: hardcoded px '2px': use a token\r\nsrc\\components\\EditorPanel.tsx:102: hardcoded hex '#ef4444': use a token\r\nsrc\\components\\EditorPanel.tsx:102: hardcoded px '2px': use a token\r\nsrc\\components\\InspectorPanel.tsx:72: hardcoded tailwind-palette 'text-slate-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:74: hardcoded tailwind-palette 'text-slate-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:75: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:84: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\InspectorPanel.tsx:97: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:110: hardcoded tailwind-palette 'text-red-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:112: hardcoded tailwind-palette 'text-green-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:114: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:123: hardcoded tailwind-palette 'text-amber-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:123: hardcoded tailwind-palette 'bg-amber-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:123: hardcoded tailwind-palette 'border-amber-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:133: hardcoded tailwind-palette 'bg-red-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:133: hardcoded tailwind-palette 'border-red-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:134: hardcoded tailwind-palette 'text-red-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:146: hardcoded px '200px': use a token\r\nsrc\\components\\InspectorPanel.tsx:148: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:149: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\InspectorPanel.tsx:153: hardcoded tailwind-palette 'text-slate-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:176: hardcoded px '200px': use a token\r\nsrc\\components\\InspectorPanel.tsx:178: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:179: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\InspectorPanel.tsx:183: hardcoded tailwind-palette 'text-slate-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:191: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:191: hardcoded tailwind-palette 'border-violet-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:191: hardcoded tailwind-palette 'text-violet-200': use a token\r\nsrc\\components\\InspectorPanel.tsx:191: hardcoded tailwind-palette 'shadow-violet-900': use a token\r\nsrc\\components\\InspectorPanel.tsx:192: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:202: hardcoded px '10px': use a token\r\nsrc\\components\\InspectorPanel.tsx:202: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\InspectorPanel.tsx:202: hardcoded tailwind-palette 'text-violet-300': use a token\r\nsrc\\components\\InspectorPanel.tsx:216: hardcoded px '150px': use a token\r\nsrc\\components\\InspectorPanel.tsx:218: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\InspectorPanel.tsx:219: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\InspectorPanel.tsx:221: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\InspectorPanel.tsx:222: hardcoded tailwind-palette 'text-slate-600': use a token\r\nsrc\\components\\LogicLabApp.tsx:16: hardcoded tailwind-palette 'text-slate-200': use a token\r\nsrc\\components\\LogicLabApp.tsx:16: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:20: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:20: hardcoded tailwind-palette 'border-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:24: hardcoded tailwind-palette 'text-slate-100': use a token\r\nsrc\\components\\LogicLabApp.tsx:26: hardcoded px '10px': use a token\r\nsrc\\components\\LogicLabApp.tsx:26: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\LogicLabApp.tsx:35: hardcoded tailwind-palette 'border-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:53: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:53: hardcoded tailwind-palette 'bg-violet-400': use a token\r\nsrc\\components\\LogicLabApp.tsx:53: hardcoded tailwind-palette 'shadow-violet-900': use a token\r\nsrc\\components\\LogicLabApp.tsx:68: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\LogicLabApp.tsx:79: hardcoded tailwind-palette 'border-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:97: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\LogicLabApp.tsx:97: hardcoded tailwind-palette 'bg-violet-400': use a token\r\nsrc\\components\\LogicLabApp.tsx:97: hardcoded tailwind-palette 'shadow-violet-900': use a token\r\nsrc\\components\\LogicLabApp.tsx:114: hardcoded px '400px': use a token\r\nsrc\\components\\LogicLabApp.tsx:125: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\LogicLabApp.tsx:128: hardcoded time '4s': use a token\r\nsrc\\components\\LogicLabApp.tsx:136: hardcoded px '500px': use a token\r\nsrc\\components\\LogicLabMark.tsx:25: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\LogicLabMark.tsx:27: hardcoded tailwind-palette 'text-violet-500': use a token\r\nsrc\\components\\LogicLabMark.tsx:28: hardcoded tailwind-palette 'text-violet-500': use a token\r\nsrc\\components\\LogicLabMark.tsx:29: hardcoded tailwind-palette 'text-amber-500': use a token\r\nsrc\\components\\PlaybackControls.tsx:19: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\PlaybackControls.tsx:34: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:34: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:34: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:44: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:44: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:44: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:54: hardcoded tailwind-palette 'text-slate-500': use a token\r\nsrc\\components\\PlaybackControls.tsx:54: hardcoded tailwind-palette 'bg-violet-500': use a token\r\nsrc\\components\\PlaybackControls.tsx:54: hardcoded tailwind-palette 'bg-violet-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:54: hardcoded tailwind-palette 'shadow-violet-900': use a token\r\nsrc\\components\\PlaybackControls.tsx:64: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:64: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:64: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:74: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:74: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:74: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:84: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:84: hardcoded tailwind-palette 'text-violet-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:84: hardcoded tailwind-palette 'text-slate-400': use a token\r\nsrc\\components\\PlaybackControls.tsx:101: hardcoded tailwind-palette 'text-slate-300': use a token\r\nsrc\\components\\PlaybackControls.tsx:101: hardcoded tailwind-palette 'border-violet-500': use a token\r\nsrc\\components\\PlaybackControls.tsx:112: hardcoded px '70px': use a token\r\nsrc\\components\\PlaybackControls.tsx:112: hardcoded tailwind-palette 'text-slate-500': use a token\r\nsrc\\lib\\execute.ts:104: hardcoded time '4000ms': use a token\r\n\r\nScanned 21 of 21 candidate file(s).\r\nFAIL: 115 hardcoded value(s). Map each to a token, or add a 'ds-allow-hardcode' comment for a justified exception.\r\n"
+    },
+    {
+      "id": "house_copy",
+      "command": "check_no_emoji.py src",
+      "exit_code": 1,
+      "output": "Scanned 21 file(s).\r\n\r\nFAIL: 1 emoji, pictograph(s) or dash(es) found:\r\n  x src\\components\\InspectorPanel.tsx:34: em/en-dash '\u2014' - AI-pattern tell; use a period, comma, colon or parentheses\r\n"
+    },
+    {
+      "id": "native_select",
+      "command": "lint_native_select.py src",
+      "exit_code": 1,
+      "output": "Scanned 11 of 11 file(s).\r\n\r\nFAIL: 3 native <select> element(s). The native control draws its own\r\nchevron hard against the edge and cannot be made to match the system.\r\n  x src\\components\\LogicLabApp.tsx:34: <select\r\n  x src\\components\\LogicLabApp.tsx:78: <select\r\n  x src\\components\\PlaybackControls.tsx:97: <select\r\n\r\nUse the Listbox or Combobox pattern in components/forms-advanced.md, or add a\r\n`ds-allow-native-select` comment if this one is deliberate.\r\n"
+    },
+    {
+      "id": "dtcg",
+      "command": "validate_tokens.py tokens",
+      "exit_code": 1,
+      "output": "ERROR: tokens not found\r\n"
+    },
+    {
+      "id": "semantic_contrast",
+      "command": "validate_contrast.py tokens/colors.json --aaa",
+      "exit_code": 1,
+      "output": "ERROR: C:\\Users\\ckzz2\\OneDrive\\Documents\\GitHub\\Logiclab\\tokens\\colors.json not found\r\n"
+    },
+    {
+      "id": "render_dependency",
+      "command": "DS_REQUIRE_BROWSER=1 node lint_intent.mjs src",
+      "exit_code": 1,
+      "output": "lint_intent: playwright not installed: REQUIRED, FAILING\n"
+    }
+  ],
+  "proof_tests": {
+    "command": "npm test -- --run .audit/ux-evidence.test.tsx",
+    "exit_code": 0,
+    "test_files": 1,
+    "passed": 4,
+    "fixture_status": "Temporary audit fixture removed after execution.",
+    "method": "Actual Python wrapper executes the built-in Runtime Error example. Browser execution transport and editor rendering are mocked. React components and useLogicLab run in JSDOM.",
+    "assertions": [
+      "ZeroDivisionError with a nonempty trace enters visualizing and the final inspector says Execution Complete without the exception name.",
+      "Both example pickers have an empty computed accessible name.",
+      "Cancelling example replacement preserves source code but leaves the attempted example selected.",
+      "The loading message has no status role or live-region ancestor."
+    ]
+  },
+  "earlier_same_chat_checks": {
+    "project_tests": {
+      "passed": 33,
+      "test_files": 3,
+      "exit_code": 0
+    },
+    "eslint": {
+      "exit_code": 0
+    },
+    "atlas_verify": {
+      "typescript": "passed",
+      "strict_gate_exit_code": 1,
+      "hardcoded_hex_usages": 15
+    }
+  },
+  "unverified": [
+    "Rendered contrast and states",
+    "axe",
+    "Keyboard interaction and focus",
+    "Screen-reader behavior",
+    "Target geometry",
+    "Responsive screenshots and overflow",
+    "Reduced-motion rendering",
+    "Forced colors",
+    "Production build and performance"
+  ]
+}

@@ -11,8 +11,9 @@ export default tseslint.config(
       "out/**",
       "build/**",
       ".cleanup-archive/**",
-      "test-results/**",
       "next-env.d.ts",
+      "test-results/**",
+      "playwright-report/**",
     ],
   },
   ...tseslint.configs.recommended,
@@ -40,7 +41,6 @@ export default tseslint.config(
       ...nextPlugin.configs['core-web-vitals'].rules,
       ...hooksPlugin.configs.recommended.rules,
       
-      // Enforce strict guidelines
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
       "react-hooks/exhaustive-deps": "error",

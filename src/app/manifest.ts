@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import colors from '../../tokens/colors.json';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -7,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Interactive Python execution visualizer',
     start_url: '/',
     display: 'standalone',
-    background_color: '#09090b',
-    theme_color: '#8b5cf6',
+    background_color: colors.primitive.bg.$value,
+    theme_color: colors.primitive.bg.$value,
     icons: [
       {
         src: '/icon/192',
