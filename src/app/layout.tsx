@@ -15,8 +15,20 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://loglab.vercel.app"),
   title: "LogicLab: Python, step by step",
   description: "Write Python, run it in your browser, and explore its execution one line at a time.",
+  openGraph: {
+    type: "website",
+    siteName: "LogicLab",
+    title: "LogicLab: Python, step by step",
+    description: "See your Python code think. Write Python, run it in your browser, and explore its execution one line at a time.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LogicLab: Python, step by step",
+    description: "See your Python code think. Explore Python execution one line at a time.",
+  },
 };
 
 export const viewport: Viewport = {
