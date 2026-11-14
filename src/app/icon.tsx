@@ -15,8 +15,8 @@ export function generateImageMetadata() {
   ];
 }
 
-export default function Icon({ id }: { id: string }) {
-  const is512 = id === '512';
+export default async function Icon({ id }: { id: Promise<string> }) {
+  const is512 = (await id) === '512';
   const dimension = is512 ? 512 : 192;
   const padding = is512 ? '64px' : '24px';
   

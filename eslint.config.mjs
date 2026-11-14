@@ -10,6 +10,8 @@ export default tseslint.config(
       "node_modules/**",
       "out/**",
       "build/**",
+      ".cleanup-archive/**",
+      "test-results/**",
       "next-env.d.ts",
     ],
   },
