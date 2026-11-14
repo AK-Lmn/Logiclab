@@ -15,6 +15,7 @@ export function useLogicLab() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    // Preload engine on mount
     initExecutionEngine().catch(console.error);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -23,7 +24,6 @@ export function useLogicLab() {
 
   const handleRun = async () => {
     if (!code.trim()) return;
-    const replay = phase !== 'editing' && result !== null;
     
     setPhase('loading-runtime');
     setResult(null);
@@ -31,11 +31,8 @@ export function useLogicLab() {
     setIsPlaying(false);
     
     try {
-      await initExecutionEngine();
-      setPhase('executing');
       const res = await executeCode(code);
       setResult(res);
-      setIsPlaying(replay && res.steps.length > 1);
       
       if (res.error && res.steps.length === 0) {
         setPhase('error');
@@ -57,8 +54,6 @@ export function useLogicLab() {
 
   const handleEdit = () => {
     setIsPlaying(false);
-    setResult(null);
-    setCurrentStepIndex(0);
     setPhase('editing');
   };
 
@@ -66,7 +61,7 @@ export function useLogicLab() {
   const totalSteps = result?.steps.length || 0;
 
   const nextStep = useCallback(() => {
-    setCurrentStepIndex(prev => Math.max(0, Math.min(prev + 1, totalSteps - 1)));
+    setCurrentStepIndex(prev => Math.min(prev + 1, totalSteps - 1));
   }, [totalSteps]);
 
   const prevStep = useCallback(() => {
@@ -82,7 +77,7 @@ export function useLogicLab() {
   }, []);
 
   useEffect(() => {
-    if (isPlaying && totalSteps > 0) {
+    if (isPlaying) {
       const intervalMs = 1000 / (1.5 * playbackSpeed);
       timerRef.current = setInterval(() => {
         setCurrentStepIndex(prev => {
@@ -109,7 +104,6 @@ export function useLogicLab() {
   }, [isPlaying, playbackSpeed, totalSteps]);
 
   const togglePlay = () => {
-    if (totalSteps === 0) return;
     if (currentStepIndex >= totalSteps - 1) {
       setCurrentStepIndex(0);
       setIsPlaying(true);

@@ -26,7 +26,8 @@ const loadPyodideFromCDN = async (): Promise<PyodideInstance> => {
   
   workerGlobal.importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
   
-  pyodide = await workerGlobal.loadPyodide();
+  // @ts-expect-error loadPyodide is loaded dynamically from importScripts
+  pyodide = await loadPyodide();
   
   if (!pyodide) {
     throw new Error('Failed to initialize Pyodide instance.');

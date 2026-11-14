@@ -1,34 +1,32 @@
 import React from 'react';
-import mark from '../../brand/mark.json';
-import wordmark from '../../brand/wordmark.json';
 
 interface LogicLabMarkProps {
   className?: string;
   size?: number;
-  color?: string;
-  variant?: 'display' | 'small' | 'reverse';
 }
 
-export function LogicLabMark({ className = '', size = 24, color = 'currentColor', variant }: LogicLabMarkProps) {
+export function LogicLabMark({ className = '', size = 24 }: LogicLabMarkProps) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox={mark.viewBox}
+      viewBox="0 0 24 24"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
-      focusable="false"
     >
-      <path d={mark[variant || (size <= 20 ? 'small' : 'display')]} fill={color} />
-    </svg>
-  );
-}
-
-export function LogicLabWordmark({ className = '' }: { className?: string }) {
-  return (
-    <svg width={wordmark.width} height={wordmark.height} viewBox={wordmark.viewBox} className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-      <path d={wordmark.path} fill="currentColor" />
+      <path
+        d="M 5 19 H 12 V 12 H 19 V 5"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-violet-400"
+      />
+      <circle cx="5" cy="19" r="3.5" fill="currentColor" className="text-violet-500" />
+      <circle cx="12" cy="12" r="3.5" fill="currentColor" className="text-violet-500" />
+      <circle cx="19" cy="5" r="3.5" fill="currentColor" className="text-amber-500" />
     </svg>
   );
 }

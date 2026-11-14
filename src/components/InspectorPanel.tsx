@@ -1,5 +1,5 @@
 import React from 'react';
-import { Terminal, ListTree, Layers, AlertTriangle, CheckCircle2, ArrowUpRight } from 'lucide-react';
+import { Terminal, ListTree, Layers, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
 import { useLogicLab } from '../hooks/useLogicLab';
 import { SerializedValue, TraceStep } from '../types/execution';
 
@@ -7,119 +7,223 @@ interface InspectorPanelProps {
   lab: ReturnType<typeof useLogicLab>;
 }
 
-function renderValue(value: SerializedValue): React.ReactNode {
-  if (!value) return 'None';
-  switch (value.type) {
-    case 'null': return 'None';
-    case 'bool': return value.value ? 'True' : 'False';
-    case 'str': return <span className="value-string">&quot;{value.value}&quot;</span>;
-    case 'list':
-    case 'tuple':
-    case 'set': {
-      const brackets = value.type === 'list' ? ['[', ']'] : value.type === 'tuple' ? ['(', ')'] : ['{', '}'];
-      return <>{brackets[0]}{value.value.map((item, index) => <React.Fragment key={index}>{index > 0 && ', '}{renderValue(item)}</React.Fragment>)}{brackets[1]}</>;
-    }
-    case 'dict': return <>{'{'}{Object.entries(value.value).map(([key, item], index) => <React.Fragment key={key}>{index > 0 && ', '}&quot;{key}&quot;: {renderValue(item)}</React.Fragment>)}{'}'}</>;
-    default: return String(value.value);
-  }
-}
-
-function getStackFrames(step: TraceStep | null) {
-  if (!step) return [];
-  if (step.stack) return step.stack;
-  return Array.from({ length: step.callDepth }, (_, index) => index === step.callDepth - 1
-    ? { functionName: step.functionName, locals: step.locals, line: step.line }
-    : { functionName: '<caller>', locals: {}, line: 0 });
-}
-
-function getPreviousScopeStep(steps: TraceStep[], index: number) {
-  const current = steps[index];
-  if (!current || current.event === 'call') return null;
-  for (let previous = index - 1; previous >= 0; previous--) {
-    const candidate = steps[previous];
-    if (candidate.functionName === current.functionName && candidate.callDepth === current.callDepth) {
-      return candidate.event === 'return' ? null : candidate;
-    }
-  }
-  return null;
-}
-
 export function InspectorPanel({ lab }: InspectorPanelProps) {
   const step = lab.currentStep;
+  const isError = lab.phase === 'error';
   const error = lab.result?.error;
-  const loadingRuntime = lab.phase === 'loading-runtime';
-  const executing = lab.phase === 'executing';
-  const finished = lab.totalSteps > 0 && lab.currentStepIndex >= lab.totalSteps - 1;
-  const previous = getPreviousScopeStep(lab.result?.steps || [], lab.currentStepIndex);
-  const variables = Object.entries(step?.locals || {});
-  const stack = getStackFrames(step);
-  const currentStdout = step ? step.stdout : lab.result?.stdout || '';
-  const outputDelta = step?.stdoutDelta || '';
-  const hasNewOutput = !!outputDelta && currentStdout.endsWith(outputDelta);
-  const retainedOutput = hasNewOutput ? currentStdout.slice(0, -outputDelta.length) : currentStdout;
-  const title = loadingRuntime ? 'Preparing Python'
-    : executing ? 'Code is running'
-    : error ? 'Execution stopped'
-    : lab.result?.truncated ? 'Trace limit reached'
-    : lab.isPlaying ? 'Playing execution'
-    : finished ? 'Execution complete'
-    : step ? 'Execution paused'
-    : 'Ready when you are';
+
+  const formatFrameLocals = (locals: Record<string, SerializedValue>) => {
+    const entries = Object.entries(locals);
+    if (entries.length === 0) return '';
+    
+    const formatted = entries.map(([k, v]) => {
+      let valStr = '';
+      if (!v) valStr = 'None';
+      else if (v.type === 'null') valStr = 'None';
+      else if (v.type === 'bool') valStr = v.value ? 'True' : 'False';
+      else if (v.type === 'str') valStr = `"${v.value}"`;
+      else if (v.type === 'list') valStr = `[${v.value.length > 0 ? '...' : ''}]`;
+      else if (v.type === 'tuple') valStr = `(${v.value.length > 0 ? '...' : ''})`;
+      else if (v.type === 'set') valStr = `{${v.value.length > 0 ? '...' : ''}}`;
+      else if (v.type === 'dict') valStr = `{${Object.keys(v.value).length > 0 ? '...' : ''}}`;
+      else valStr = String(v.value);
+      
+      return `${k} = ${valStr}`;
+    }).join(', ');
+
+    return ` — ${formatted}`;
+  };
+
+  const getFrameLabel = (frame: { functionName: string; locals: Record<string, SerializedValue> }) => {
+    const name = frame.functionName || '<caller>';
+    if (name === '<module>') {
+      return '<module>';
+    }
+    const localsString = formatFrameLocals(frame.locals);
+    return `${name}${localsString}`;
+  };
+
+  const getStackFrames = (currentStep: TraceStep | null) => {
+    if (!currentStep) return [];
+    if (currentStep.stack) {
+      return currentStep.stack;
+    }
+    // Fallback for backward compatibility or when stack is not populated
+    const frames = [];
+    for (let i = 0; i < currentStep.callDepth; i++) {
+      if (i === currentStep.callDepth - 1) {
+        frames.push({
+          functionName: currentStep.functionName,
+          locals: currentStep.locals,
+          line: currentStep.line
+        });
+      } else {
+        frames.push({
+          functionName: '<caller>',
+          locals: {},
+          line: 0
+        });
+      }
+    }
+    return frames;
+  };
+
+  const renderValue = (val: SerializedValue): React.ReactNode => {
+    if (!val) return <span className="text-slate-500">undefined</span>;
+    switch (val.type) {
+      case 'null': return <span className="text-slate-500 italic">None</span>;
+      case 'bool': return <span className="text-violet-400 font-mono">{val.value ? 'True' : 'False'}</span>;
+      case 'int':
+      case 'float': return <span className="text-amber-400 font-mono">{val.value}</span>;
+      case 'str': return <span className="text-green-400 font-mono">&quot;{val.value}&quot;</span>;
+      case 'list': return <span className="text-slate-300 font-mono">[{val.value.map((v: SerializedValue, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)}]</span>;
+      case 'tuple': return <span className="text-slate-300 font-mono">({val.value.map((v: SerializedValue, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)})</span>;
+      case 'set': return <span className="text-slate-300 font-mono">{"{"}{val.value.map((v: SerializedValue, i: number) => <React.Fragment key={i}>{i > 0 && ', '}{renderValue(v)}</React.Fragment>)}{"}"}</span>;
+      case 'dict': 
+        return (
+          <span className="text-slate-300 font-mono">
+            {"{"}
+            {Object.entries(val.value).map(([k, v]: [string, SerializedValue], i) => (
+              <React.Fragment key={k}>
+                {i > 0 && ', '}
+                <span className="text-green-400">&quot;{k}&quot;</span>: {renderValue(v)}
+              </React.Fragment>
+            ))}
+            {"}"}
+          </span>
+        );
+      case 'truncated': return <span className="text-slate-500 italic">{val.value}</span>;
+      case 'unsupported': return <span className="text-slate-400 italic">{val.value}</span>;
+      default: return <span className="text-slate-400">{JSON.stringify(val)}</span>;
+    }
+  };
+
+  const currentStdout = isError ? lab.result?.stdout : step?.stdout || '';
 
   return (
-    <aside className="inspector" id="execution-inspector" aria-label="Execution inspector" aria-busy={loadingRuntime || executing} data-has-trace={lab.totalSteps > 0}>
-      <div className="inspector-heading">
-        <h2 id="execution-summary" tabIndex={-1}>{title}</h2>
-        <p>{loadingRuntime ? 'Loading the Python environment. Your program will run when it is ready.' : executing ? 'Your program is running. Values and output will appear when the trace is ready.' : step ? <>Line <strong>{step.line}</strong> in <code>{step.functionName || '<module>'}</code></> : 'Run a program to see its values and follow its calls.'}</p>
-        {finished && !error && !lab.result?.truncated && <span className="outcome-label"><CheckCircle2 aria-hidden="true" />All steps recorded</span>}
-      </div>
-
-      {error && (
-        <div className="execution-error" role="alert">
-          <AlertTriangle aria-hidden="true" />
-          <div><h3>{error.name}</h3><p>{error.message}</p><p className="error-help">{error.name === 'InternalError' ? 'Try Run again. Your code is preserved.' : error.name === 'TimeoutError' ? 'Edit your program to reduce its work, then run again.' : `Line ${error.line}. Review this line, then edit your code and run again.`}</p></div>
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      
+      {/* Current Event Summary */}
+      <div className="bg-charcoal-900 border-b border-charcoal-700 px-4 py-3 shrink-0 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isError ? (
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+          ) : lab.currentStepIndex >= lab.totalSteps - 1 ? (
+            <CheckCircle2 className="w-5 h-5 text-green-500" />
+          ) : (
+            <Activity className="w-5 h-5 text-violet-400" />
+          )}
+          <span className="text-sm font-medium">
+            {isError ? 'Execution Failed' : 
+             lab.currentStepIndex >= lab.totalSteps - 1 && lab.totalSteps > 0 ? 'Execution Complete' : 
+             step ? (step.event === 'call' ? 'Calling' : step.event === 'return' ? 'Returning from' : 'Executing line') + " " + step.line + " in " + (step.functionName || '<module>') : 'Ready'}
+          </span>
         </div>
-      )}
-      {lab.result?.truncated && <p className="trace-warning">Trace limited: {lab.result.truncationReason || 'execution limit reached'}. Recorded steps remain available.</p>}
-
-      <div className="inspector-sections">
-        <section className="inspector-section" aria-labelledby="variables-heading">
-          <div className="panel-heading"><h3 id="variables-heading"><ListTree aria-hidden="true" />Variables</h3><span className="panel-count">{variables.length}</span></div>
-          {variables.length ? (
-            <div className="variable-table-wrap" tabIndex={0} role="region" aria-label="Variable values">
-              <table className="variable-table">
-                <thead><tr><th scope="col">Variable</th><th scope="col">Value</th></tr></thead>
-                <tbody>{variables.map(([name, value]) => {
-                  const valueKey = JSON.stringify(value);
-                  const isChanged = previous && JSON.stringify(previous.locals[name]) !== valueKey;
-                  return <tr key={name} className={isChanged ? 'variable-changed' : undefined}>
-                    <th scope="row"><code>{name}</code>{isChanged && <span className="changed-label">Changed</span>}</th>
-                    <td><span className="value-slot"><code key={valueKey} className={`trace-value${isChanged ? ' is-updated' : ''}`}>{renderValue(value)}</code></span><span className="value-type">{value.type}</span></td>
-                  </tr>;
-                })}</tbody>
-              </table>
-            </div>
-          ) : <p className="empty-state">{step ? 'No variables in this scope yet.' : 'Your variables will appear here.'}</p>}
-        </section>
-
-        <section className="inspector-section" aria-labelledby="stack-heading">
-          <div className="panel-heading"><h3 id="stack-heading"><Layers aria-hidden="true" />Call stack</h3><span className="panel-count">{stack.length}</span></div>
-          {stack.length ? <ol className="stack-list" tabIndex={0} aria-label="Stack frames">{[...stack].reverse().map((frame, index) => {
-            const originalIndex = stack.length - 1 - index;
-            const isCurrent = index === 0;
-            return <li key={originalIndex} className={isCurrent ? 'stack-frame is-current' : 'stack-frame'} aria-current={isCurrent ? 'step' : undefined}>
-              <span className="stack-depth">{String(originalIndex + 1).padStart(2, '0')}</span>
-              <div className="stack-frame-content"><code>{frame.functionName || '<module>'}</code><span>{Object.entries(frame.locals).map(([name, value], index) => <React.Fragment key={name}>{index > 0 && ', '}{name} = {renderValue(value)}</React.Fragment>)}</span></div>
-              {isCurrent && <span className="current-label"><ArrowUpRight aria-hidden="true" /><span className="sr-only">Current</span></span>}
-            </li>;
-          })}</ol> : <p className="empty-state">Function calls will build a stack here.</p>}
-        </section>
-
-        <section className="output-panel" aria-labelledby="output-heading">
-          <div className="panel-heading"><h3 id="output-heading"><Terminal aria-hidden="true" />Output</h3><span>Printed text</span></div>
-          <pre tabIndex={0} aria-label="Printed output">{currentStdout ? <>{retainedOutput}{hasNewOutput && <span key={step?.id} className="output-addition">{outputDelta}</span>}</> : <span className="output-empty">{lab.result ? 'No output at this step.' : 'Printed output appears here.'}</span>}</pre>
-        </section>
+        {lab.result?.truncated && (
+          <span className="text-xs text-amber-500 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+            Truncated: {lab.result.truncationReason}
+          </span>
+        )}
       </div>
-    </aside>
+
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        
+        {/* Error Display */}
+        {isError && error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+            <h3 className="text-red-400 font-bold mb-1 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              {error.name} (Line {error.line})
+            </h3>
+            <p className="text-red-300 text-sm font-mono whitespace-pre-wrap">{error.message}</p>
+          </div>
+        )}
+
+        {/* Locals & Call Stack Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0 max-w-full">
+          
+          {/* Variables */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-lg overflow-hidden flex flex-col min-h-[200px]">
+            <div className="bg-charcoal-900 px-3 py-2 border-b border-charcoal-700 flex items-center gap-2">
+              <ListTree className="w-4 h-4 text-violet-400" />
+              <h3 className="text-xs font-semibold tracking-wider text-slate-300 uppercase">Variables</h3>
+            </div>
+            <div className="p-3 overflow-auto flex-1">
+              {!step || Object.keys(step.locals || {}).length === 0 ? (
+                <div className="text-slate-500 text-sm italic h-full flex items-center justify-center">No variables in current scope</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <tbody>
+                    {Object.entries(step.locals).map(([name, val]: [string, SerializedValue]) => {
+                      // Check if changed
+                      const prevStep = lab.currentStepIndex > 0 ? lab.result?.steps[lab.currentStepIndex - 1] : null;
+                      const isChanged = prevStep && JSON.stringify(prevStep.locals[name]) !== JSON.stringify(val);
+                      
+                      return (
+                        <tr key={name} className={"border-b border-charcoal-700/50 last:border-0 " + (isChanged ? 'bg-violet-500/10' : '')}>
+                          <td className="py-1.5 pr-4 align-top font-mono text-slate-300 break-words min-w-[80px]">{name}</td>
+                          <td className="py-1.5 break-all">{renderValue(val)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Call Stack */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-lg overflow-hidden flex flex-col min-h-[200px]">
+            <div className="bg-charcoal-900 px-3 py-2 border-b border-charcoal-700 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-violet-400" />
+              <h3 className="text-xs font-semibold tracking-wider text-slate-300 uppercase">Call Stack</h3>
+            </div>
+            <div className="p-3 overflow-auto flex-1 flex flex-col gap-2">
+              {!step ? (
+                 <div className="text-slate-500 text-sm italic h-full flex items-center justify-center">Empty stack</div>
+              ) : (() => {
+                const stack = getStackFrames(step);
+                return [...stack].reverse().map((frame, idx) => {
+                  const originalIdx = stack.length - 1 - idx;
+                  const isCurrent = originalIdx === stack.length - 1;
+                  const cardClass = "px-3 py-1.5 rounded text-sm font-mono border break-words transition-colors flex items-center justify-between gap-2 min-w-0 w-full max-w-full " + 
+                    (isCurrent 
+                      ? 'bg-violet-500/20 border-violet-500/50 text-violet-200 font-semibold shadow-sm shadow-violet-900/10' 
+                      : 'bg-charcoal-900 border-charcoal-700 text-slate-400');
+                  
+                  return (
+                    <div 
+                      key={originalIdx} 
+                      className={cardClass}
+                      style={{ paddingLeft: `${Math.min(originalIdx, 6) * 6 + 12}px` }}
+                    >
+                      <span className="break-words min-w-0">{getFrameLabel(frame)}</span>
+                      {isCurrent && (
+                        <span className="text-[10px] bg-violet-500/30 text-violet-300 px-1.5 py-0.5 rounded font-sans uppercase tracking-wider font-bold shrink-0">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+          
+        </div>
+
+        {/* Output Panel */}
+        <div className="bg-ink-900 border border-charcoal-700 rounded-lg overflow-hidden flex flex-col min-h-[150px]">
+          <div className="bg-charcoal-900 px-3 py-2 border-b border-charcoal-700 flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-slate-400" />
+            <h3 className="text-xs font-semibold tracking-wider text-slate-300 uppercase">Output</h3>
+          </div>
+          <div className="p-3 font-mono text-sm text-slate-300 overflow-auto flex-1 whitespace-pre-wrap break-words">
+            {currentStdout || <span className="text-slate-600 italic">No output yet...</span>}
+          </div>
+        </div>
+
+      </div>
+    </div>
   );
 }

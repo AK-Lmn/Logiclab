@@ -1,26 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Sans, DM_Mono } from "next/font/google";
-import colors from '../../tokens/colors.json';
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const dmMono = DM_Mono({
-  variable: "--font-dm-mono",
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: ['400', '500'],
 });
 
 export const metadata: Metadata = {
-  title: "LogicLab: Python, step by step",
-  description: "Write Python, run it in your browser, and explore its execution one line at a time.",
+  title: "LogicLab",
+  description: "See your Python code think.",
 };
 
 export const viewport: Viewport = {
-  themeColor: colors.primitive.bg.$value,
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
@@ -31,11 +29,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSans.variable} ${dmMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body>
-        {children}
-      </body>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }
