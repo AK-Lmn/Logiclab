@@ -1,6 +1,7 @@
 import { ExecutionResult } from '../types/execution';
 
 const WORKER_TIMEOUT_MS = 4000;
+const RUNTIME_START_TIMEOUT_MS = 30000;
 
 let worker: Worker | null = null;
 let initResolve: (() => void) | null = null;
@@ -8,12 +9,19 @@ let initReject: ((err: Error) => void) | null = null;
 let executeResolve: ((res: string) => void) | null = null;
 let executeReject: ((err: Error) => void) | null = null;
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
+let initialization: Promise<void> | null = null;
+let initialized = false;
+let initTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const terminateWorker = () => {
   if (worker) {
     worker.terminate();
     worker = null;
   }
+  initialized = false;
+  initialization = null;
+  if (initTimeoutId) clearTimeout(initTimeoutId);
+  initTimeoutId = null;
 };
 
 const ensureWorker = (): Worker => {
@@ -23,13 +31,16 @@ const ensureWorker = (): Worker => {
     });
     
     worker.onmessage = (e) => {
-      if (timeoutId) {
+      const { type, result, error } = e.data;
+      if ((type === 'execute-success' || type === 'execute-error') && timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
       }
       
-      const { type, result, error } = e.data;
       if (type === 'init-success') {
+        if (initTimeoutId) clearTimeout(initTimeoutId);
+        initTimeoutId = null;
+        initialized = true;
         if (initResolve) initResolve();
         initResolve = null;
         initReject = null;
@@ -41,6 +52,7 @@ const ensureWorker = (): Worker => {
         if (initReject) initReject(new Error(error));
         initResolve = null;
         initReject = null;
+        terminateWorker();
       } else if (type === 'execute-error') {
         if (executeReject) executeReject(new Error(error));
         executeResolve = null;
@@ -71,15 +83,26 @@ const ensureWorker = (): Worker => {
 };
 
 export const initExecutionEngine = async (): Promise<void> => {
-  return new Promise<void>((resolve, reject) => {
+  if (initialized) return;
+  if (initialization) return initialization;
+  initialization = new Promise<void>((resolve, reject) => {
     const w = ensureWorker();
     initResolve = resolve;
     initReject = reject;
+    initTimeoutId = setTimeout(() => {
+      initReject?.(new Error('Python could not start. Check your connection and try again.'));
+      initResolve = null;
+      initReject = null;
+      terminateWorker();
+    }, RUNTIME_START_TIMEOUT_MS);
     w.postMessage({ id: Date.now(), action: 'init' });
   });
+  return initialization;
 };
 
 export const executeCode = async (code: string): Promise<ExecutionResult> => {
+  await initExecutionEngine();
+  if (executeResolve) throw new Error('A program is already running. Wait for it to finish.');
   return new Promise<ExecutionResult>((resolve, reject) => {
     const w = ensureWorker();
     executeResolve = (jsonStr: string) => {
@@ -101,7 +124,7 @@ export const executeCode = async (code: string): Promise<ExecutionResult> => {
         stdout: '',
         error: {
           name: 'TimeoutError',
-          message: 'Execution exceeded the time limit (4000ms).',
+          message: 'Execution exceeded the four-second time limit.',
           line: 1,
         },
         durationMs: WORKER_TIMEOUT_MS,

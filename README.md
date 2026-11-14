@@ -1,5 +1,7 @@
 # LogicLab
 
+![LogicLab logo](brand/masters/logiclab-horizontal.svg)
+
 “See your Python code think.”
 
 LogicLab is an interactive Python execution visualizer for programming students. It helps users understand how code runs by letting them write Python code, execute it inside the browser, and step through execution one line at a time.
@@ -43,12 +45,20 @@ To prevent dangerous operations and enforce a clean educational sandbox, the fol
 
 - **Next.js 16 (App Router)**: Framework & rendering.
 - **TypeScript**: Typed safety across execution modules.
-- **Tailwind CSS v4**: Theme styling utilizing deep ink/charcoal tones and violet highlights.
-- **CodeMirror 6**: Code editor integration.
+- **Tailwind CSS v4**: A paper-and-forest workspace with semantic design tokens and a dark code editor.
+- **CodeMirror 6**: Direct editor integration with Python syntax, history, bracket pairing, and accessible keyboard navigation.
 - **Pyodide (Wasm)**: Local Python runtime.
 - **Python Wrapper**: Employs `sys.settrace` inside a wrapper to serialize trace steps, frame depths, print history, and variables.
 
+## Identity
+
+The Open Frame logo brings one observable block into view. The [identity kit](brand/README.md)
+includes outlined SVG masters, PNGs, favicon and app icons, and a compact usage guide.
+The app header and generated icon routes use the same geometric source.
+
 ## Installation & Local Development
+
+Use Node.js 22.12 or later. Wrapper unit tests also require Python 3 on PATH.
 
 1. **Clone the repository.**
 2. **Install dependencies:**
@@ -67,6 +77,34 @@ Verify the wrapper's AST parser, serialization, truncation rules, and state mana
 ```bash
 npm run test
 ```
+
+Run the production browser checks, including real Python execution, replacement confirmation,
+keyboard controls, responsive layouts, accessibility scans, and long-source scrolling:
+
+```bash
+npm run build
+npm run test:e2e
+```
+
+Browser tests use an installed Google Chrome in isolated headless sessions. The Python wrapper
+unit tests require `python` on PATH. Design tokens live in `tokens/*.json`; run `npm run tokens`
+after editing them. Development and production builds regenerate the CSS and app icon automatically.
+
+Production builds use Next.js's supported Webpack builder. Development retains Turbopack.
+The [verification notes](docs/verification.md) record the current behavior, checks, and limitations.
+Browser reports, screenshots, and traces are written to the ignored `test-results/` directory.
+
+The interface preserves partial traces after runtime errors. Changing an example requires a
+confirmation before replacing nonempty code. All primary controls support keyboard use, and
+optional motion respects reduced-motion preferences.
+
+The first run records a trace for manual exploration with Play or Next step. Run again reruns
+the program and automatically starts playback of the new trace.
+Edit code clears the previous execution results while preserving the program.
+The Run button shows Running… and stays disabled throughout execution and automatic playback.
+It becomes available when playback finishes or pauses. The status above the editor distinguishes
+preparation, execution, playback, pause, completion, and failure. Results, changed values, menus,
+and dialogs use short transitions that respect reduced motion.
 
 ## Known Limitations
 
